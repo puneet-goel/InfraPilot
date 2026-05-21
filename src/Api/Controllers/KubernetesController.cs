@@ -18,7 +18,7 @@ public class KubernetesController : ControllerBase
     [HttpGet("analyze")]
     public async Task<IActionResult> Analyze()
     {
-        var result = await _infrastructureAgent
+        string result = await _infrastructureAgent
             .AnalyzeClusterAsync();
 
         return Ok(result);

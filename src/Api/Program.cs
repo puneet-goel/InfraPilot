@@ -2,7 +2,6 @@ using Agents.Infrastructure;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
-using Tools.Kubernetes;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -12,10 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<KubernetesTools>();
-
 builder.Services.AddScoped<InfrastructureAgent>();
-
 
 builder.Services.AddSingleton<IChatClient>(sp =>
 {
