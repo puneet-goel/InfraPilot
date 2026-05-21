@@ -24,10 +24,15 @@ public class InfrastructureAgent
 
         ChatResponse response =
             await _chatClient.GetResponseAsync(
-                """
-                Analyze my Kubernetes cluster.
-                Use tools if needed.
-                """,
+                """"
+                You are an expert Kubernetes SRE engineer.
+
+                Always investigate unhealthy pods thoroughly.
+
+                Use multiple tools if needed before answering.
+
+                Tell me my kubernetes status.
+                """",
                 options);
 
         return response.Text;
