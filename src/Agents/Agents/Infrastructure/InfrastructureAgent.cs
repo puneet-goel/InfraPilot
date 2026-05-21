@@ -1,7 +1,7 @@
 ﻿using Agents.MCP;
 using Microsoft.Extensions.AI;
 
-namespace Agents.Infrastructure;
+namespace Agents.Agents.Infrastructure;
 
 public class InfrastructureAgent
 {
@@ -14,7 +14,7 @@ public class InfrastructureAgent
 
     public async Task<string> AnalyzeAsync(string query)
     {
-        IList<AITool> tools = await McpHostService.GetToolsAsync();
+        IList<AITool> tools = await InfraMcpHostService.GetToolsAsync();
 
         ChatOptions options = new()
         {

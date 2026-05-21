@@ -1,8 +1,4 @@
-using Agents.AgentClientInteractor;
-using Agents.Infrastructure;
-using Agents.Orchestrator;
-using Agents.RootReviewer;
-using Agents.Workflow;
+using Agents.RegisterServices;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
@@ -15,14 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<InfrastructureAgent>();
-builder.Services.AddScoped<RootReviewerAgent>();
-
-builder.Services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
-
-builder.Services.AddSingleton<OrchestratorAgent>();
-
-builder.Services.AddScoped<WorkflowEngine>();
+builder.Services.AddAgents();
 
 builder.Services.AddSingleton<IChatClient>(sp =>
 {

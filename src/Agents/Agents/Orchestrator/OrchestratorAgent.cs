@@ -2,7 +2,7 @@
 using Microsoft.Extensions.AI;
 using System.Text.Json;
 
-namespace Agents.Orchestrator;
+namespace Agents.Agents.Orchestrator;
 
 public class OrchestratorAgent
 {

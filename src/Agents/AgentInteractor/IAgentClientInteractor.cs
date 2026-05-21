@@ -1,4 +1,4 @@
-﻿namespace Agents.AgentClientInteractor;
+﻿namespace Agents.AgentInteractor;
 
 public interface IAgentClientInteractor
 {

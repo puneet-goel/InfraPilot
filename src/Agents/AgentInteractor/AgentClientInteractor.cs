@@ -1,7 +1,7 @@
-﻿using Agents.Infrastructure;
-using Agents.RootReviewer;
+﻿using Agents.Agents.Infrastructure;
+using Agents.Agents.RootReviewer;
 
-namespace Agents.AgentClientInteractor;
+namespace Agents.AgentInteractor;
 
 public class AgentClientInteractor : IAgentClientInteractor
 {

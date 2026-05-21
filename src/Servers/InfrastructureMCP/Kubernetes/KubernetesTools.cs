@@ -2,12 +2,12 @@
 using System.ComponentModel;
 using System.Diagnostics;
 
-namespace MCPServer.Kubernetes;
+namespace InfrastructureMCP.Kubernetes;
 
 [McpServerToolType]
 public static class KubernetesTools
 {
-    [McpServerTool]
+    [McpServerTool] 
     [Description("""
         Get Kubernetes resources.
         

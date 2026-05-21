@@ -3,14 +3,14 @@ using ModelContextProtocol.Client;
 
 namespace Agents.MCP;
 
-public class McpHostService
+public class DeployMcpHostService
 {
     public static async Task<IList<AITool>> GetToolsAsync()
     {
         StdioClientTransport transport =
             new (new()
             {
-                Name = "Kubernetes MCP Server",
+                Name = "Deploy Resources on Kubernetes MCP Server",
 
                 Command = "dotnet",
 
@@ -18,7 +18,7 @@ public class McpHostService
                 [
                     "run",
                     "--project",
-                    "../MCPServer"
+                    "../Server/DeploymentMCP"
                 ]
             });
 

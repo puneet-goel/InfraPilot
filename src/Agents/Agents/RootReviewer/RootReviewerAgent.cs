@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.AI;
 
-namespace Agents.RootReviewer;
+namespace Agents.Agents.RootReviewer;
 
 public class RootReviewerAgent
 {

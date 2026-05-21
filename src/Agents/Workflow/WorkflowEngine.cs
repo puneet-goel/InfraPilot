@@ -1,4 +1,4 @@
-﻿using Agents.AgentClientInteractor;
+﻿using Agents.AgentInteractor;
 
 namespace Agents.Workflow;
 
