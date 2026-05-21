@@ -21,8 +21,7 @@ public static class KubernetesTools
         - svc (services)
     """)]
     public static async Task<string> GetResource(
-    [Description("Kubernetes resource type")]
-    string resourceType)
+        [Description("Kubernetes resource type")] string resourceType)
     {
         return await RunKubectlCommand(
             $"get {resourceType}");
@@ -42,10 +41,8 @@ public static class KubernetesTools
         - svc (services)
     """)]
     public static async Task<string> DescribeSpecificResource(
-        [Description("Kubernetes resource type")]
-        string resourceType,
-        [Description("Kubernetes resource type")]
-        string resouceName)
+        [Description("Kubernetes resource type name")] string resourceType,
+        [Description("Kubernetes resource name")] string resouceName)
     {
         return await RunKubectlCommand(
             $"describe {resourceType} {resouceName}");
@@ -53,15 +50,13 @@ public static class KubernetesTools
 
     [McpServerTool]
     [Description("Get logs for a Kubernetes pod")]
-    public static async Task<string> GetPodLogs(
-        string podName)
+    public static async Task<string> GetPodLogs(string podName)
     {
         return await RunKubectlCommand(
             $"logs {podName}");
     }
 
-    private static async Task<string> RunKubectlCommand(
-        string arguments)
+    private static async Task<string> RunKubectlCommand(string arguments)
     {
         var processInfo = new ProcessStartInfo
         {

@@ -1,4 +1,7 @@
+using Agents.AgentClientInteractor;
 using Agents.Infrastructure;
+using Agents.Orchestrator;
+using Agents.Workflow;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
@@ -13,6 +16,12 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<InfrastructureAgent>();
 
+builder.Services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
+
+builder.Services.AddSingleton<OrchestratorAgent>();
+
+builder.Services.AddScoped<WorkflowEngine>();
+
 builder.Services.AddSingleton<IChatClient>(sp =>
 {
     IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
@@ -21,7 +30,7 @@ builder.Services.AddSingleton<IChatClient>(sp =>
     string model = configuration["AI:model"]!;
     string cred = configuration["AI:cred"]!;
 
-    OpenAIClient client = new OpenAIClient(
+    OpenAIClient client = new (
         new ApiKeyCredential(cred),
         new OpenAIClientOptions
         {

@@ -12,10 +12,9 @@ public class InfrastructureAgent
         _chatClient = chatClient;
     }
 
-    public async Task<string> AnalyzeClusterAsync()
+    public async Task<string> AnalyzeClusterAsync(string query, string context)
     {
-        IList<AITool> tools =
-            await McpHostService.GetToolsAsync();
+        IList<AITool> tools = await McpHostService.GetToolsAsync();
 
         ChatOptions options = new()
         {
@@ -24,14 +23,16 @@ public class InfrastructureAgent
 
         ChatResponse response =
             await _chatClient.GetResponseAsync(
-                """"
+                $""""
                 You are an expert Kubernetes SRE engineer.
 
                 Always investigate unhealthy pods thoroughly.
 
                 Use multiple tools if needed before answering.
 
-                Tell me my kubernetes status.
+                Query: {query}
+
+                Context: {context}
                 """",
                 options);
 
