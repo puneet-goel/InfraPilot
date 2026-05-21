@@ -1,6 +1,7 @@
 using Agents.AgentClientInteractor;
 using Agents.Infrastructure;
 using Agents.Orchestrator;
+using Agents.RootReviewer;
 using Agents.Workflow;
 using Microsoft.Extensions.AI;
 using OpenAI;
@@ -15,6 +16,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<InfrastructureAgent>();
+builder.Services.AddScoped<RootReviewerAgent>();
 
 builder.Services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
 

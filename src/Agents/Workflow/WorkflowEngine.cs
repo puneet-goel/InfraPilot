@@ -13,15 +13,15 @@ public class WorkflowEngine
 
     public async Task<string> ExecuteAsync(WorkflowPlan workflowPlan)
     {
-        List<string> results = [];
+        string concatenatedResults = string.Empty;
 
         foreach (WorkflowStep step in workflowPlan.Steps)
         {
-            string context = results.Count == 0 ? string.Empty : results.Last();
-            string result = await _agentClient.ExecuteAsync(step.AgentName, step.Task, context);
-            results.Add(result);
+            string result = await _agentClient.ExecuteAsync(step.AgentName, step.Task);
+            concatenatedResults += $"\n\n According to Agent: {step.AgentName} \n\n task: {step.Task} \n\n result: {result}";
         }
 
-        return (results.Count == 0 ? string.Empty : results.Last());
+        string rootResult = await _agentClient.ExecuteAsync("RootReviewer", concatenatedResults);
+        return rootResult;
     }
 }

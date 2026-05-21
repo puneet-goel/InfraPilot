@@ -12,7 +12,7 @@ public class InfrastructureAgent
         _chatClient = chatClient;
     }
 
-    public async Task<string> AnalyzeClusterAsync(string query, string context)
+    public async Task<string> AnalyzeAsync(string query)
     {
         IList<AITool> tools = await McpHostService.GetToolsAsync();
 
@@ -31,8 +31,6 @@ public class InfrastructureAgent
                 Use multiple tools if needed before answering.
 
                 Query: {query}
-
-                Context: {context}
                 """",
                 options);
 
