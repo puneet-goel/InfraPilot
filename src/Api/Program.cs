@@ -11,6 +11,8 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddLogging();
+
 builder.Services.AddAgents();
 
 builder.Services.AddSingleton<IChatClient>(sp =>

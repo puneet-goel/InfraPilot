@@ -19,7 +19,11 @@ public class OrchestratorAgent
     public async Task<WorkflowPlan> CreatePlanAsync(string userRequest)
     {
         string agentDescriptions = string.Join("\n\n", 
-            _agents.Select(agent => $$"""
+            _agents
+            .Where(agent =>
+                agent.Name !=
+                "RootReviewerAgent")
+            .Select(agent => $$"""
             Agent: {{agent.Name}}
             Responsibilities: {{agent.Description}} 
             """));

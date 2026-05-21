@@ -2,7 +2,7 @@
 
 namespace Agents.Agents.RootReviewer;
 
-public class RootReviewerAgent
+public class RootReviewerAgent: IAgent
 {
     private readonly IChatClient _chatClient;
 
@@ -10,6 +10,21 @@ public class RootReviewerAgent
     {
         _chatClient = chatClient;
     }
+
+    public string Name => "RootReviewerAgent";
+
+    public bool IsWriteAgent => false;
+
+    public string Description => """
+    Handles:
+    - root cause analysis
+    - incident investigation
+    - correlating findings from multiple agents
+    - identifying likely causes of failures
+    - summarizing operational issues
+    - confidence-based reasoning
+    - incident review and explanation
+    """;
 
     public async Task<string> AnalyzeAsync(string request)
     {

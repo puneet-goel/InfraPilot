@@ -18,7 +18,7 @@ public class InfraMcpHostService
                 [
                     "run",
                     "--project",
-                    "../Server/InfraStructureMCP"
+                    "../Servers/InfrastructureMCP"
                 ]
             });
 

@@ -18,7 +18,7 @@ public class DeployMcpHostService
                 [
                     "run",
                     "--project",
-                    "../Server/DeploymentMCP"
+                    "../Servers/DeploymentMCP"
                 ]
             });
 

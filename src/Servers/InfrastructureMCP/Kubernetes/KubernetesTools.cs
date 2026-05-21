@@ -1,12 +1,20 @@
-﻿using ModelContextProtocol.Server;
+﻿using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Diagnostics;
 
 namespace InfrastructureMCP.Kubernetes;
 
 [McpServerToolType]
-public static class KubernetesTools
+public class KubernetesTools
 {
+    private readonly ILogger<KubernetesTools> _logger;
+
+    public KubernetesTools(ILogger<KubernetesTools> logger)
+    {
+        _logger = logger;
+    }
+
     [McpServerTool] 
     [Description("""
         Get Kubernetes resources.
@@ -20,7 +28,7 @@ public static class KubernetesTools
         - secrets
         - svc (services)
     """)]
-    public static async Task<string> GetResource(
+    public async Task<string> GetResource(
         [Description("Kubernetes resource type")] string resourceType)
     {
         return await RunKubectlCommand(
@@ -40,7 +48,7 @@ public static class KubernetesTools
         - secrets
         - svc (services)
     """)]
-    public static async Task<string> DescribeSpecificResource(
+    public async Task<string> DescribeSpecificResource(
         [Description("Kubernetes resource type name")] string resourceType,
         [Description("Kubernetes resource name")] string resouceName)
     {
@@ -50,21 +58,21 @@ public static class KubernetesTools
 
     [McpServerTool]
     [Description("Get logs for a Kubernetes pod")]
-    public static async Task<string> GetPodLogs(string podName)
+    public async Task<string> GetPodLogs(string podName)
     {
         return await RunKubectlCommand($"logs {podName}");
     }
 
     [McpServerTool]
     [Description("Get Kubernetes service accounts")]
-    public static async Task<string> GetServiceAccounts()
+    public async Task<string> GetServiceAccounts()
     {
         return await RunKubectlCommand($"get serviceaccounts");
     }
 
     [McpServerTool]
     [Description("Get pod security context configuration")]
-    public static async Task<string> GetPodSecurityContext(
+    public async Task<string> GetPodSecurityContext(
         [Description("Pod name")] string podName)
     {
         return await RunKubectlCommand($"get pod {podName} --o yaml");
@@ -72,7 +80,7 @@ public static class KubernetesTools
 
     [McpServerTool]
     [Description("Get deployment security configuration")]
-    public static async Task<string> GetDeploymentSecuritySpec(
+    public async Task<string> GetDeploymentSecuritySpec(
         [Description("Deployment name")] string deploymentName)
     {
         return await RunKubectlCommand($"get deployment {deploymentName} -o yaml");
@@ -80,7 +88,7 @@ public static class KubernetesTools
 
     [McpServerTool]
     [Description("Describe Kubernetes service account")]
-    public static async Task<string> DescribeServiceAccount(
+    public async Task<string> DescribeServiceAccount(
         [Description("Service account name")] string serviceAccount)
     {
         return await RunKubectlCommand($"describe serviceaccount {serviceAccount}");
@@ -88,21 +96,35 @@ public static class KubernetesTools
 
     [McpServerTool]
     [Description("Get Kubernetes ingresses")]
-    public static async Task<string> GetIngresses()
+    public async Task<string> GetIngresses()
     {
         return await RunKubectlCommand($"get ingress");
     }
 
     [McpServerTool]
     [Description("Get Kubernetes network policies")]
-    public static async Task<string> GetNetworkPolicies()
+    public async Task<string> GetNetworkPolicies()
     {
         return await RunKubectlCommand("get networkpolicies");
     }
 
-    private static async Task<string> RunKubectlCommand(string arguments)
+    private async Task<string> RunKubectlCommand(string arguments)
     {
-        var processInfo = new ProcessStartInfo
+        string executionId = Guid.NewGuid().ToString()[..8];
+
+        Stopwatch stopwatch = Stopwatch.StartNew();
+
+        _logger.LogInformation(
+            """
+            [{ExecutionId}] Starting kubectl command.
+            Arguments: {Arguments}
+            Timestamp: {Timestamp}
+            """,
+            executionId,
+            arguments,
+            DateTime.UtcNow);
+
+        ProcessStartInfo processInfo = new()
         {
             FileName = "kubectl",
             Arguments = arguments,
@@ -112,22 +134,50 @@ public static class KubernetesTools
             CreateNoWindow = true
         };
 
-        using var process = new Process
+        using Process process = new()
         {
             StartInfo = processInfo
         };
 
         process.Start();
 
-        var output =
-            await process.StandardOutput
-                .ReadToEndAsync();
-
-        var error =
-            await process.StandardError
-                .ReadToEndAsync();
+        string output = await process.StandardOutput.ReadToEndAsync();
+        string error = await process.StandardError.ReadToEndAsync();
 
         await process.WaitForExitAsync();
+
+        stopwatch.Stop();
+
+        _logger.LogInformation(
+            """
+            [{ExecutionId}] Kubectl command completed.
+            ExitCode: {ExitCode}
+            DurationMs: {Duration}
+            """,
+            executionId,
+            process.ExitCode,
+            stopwatch.ElapsedMilliseconds);
+
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            _logger.LogError(
+                """
+                [{ExecutionId}] Kubectl command failed.
+                Error: {Error}
+                """,
+                executionId,
+                error);
+        }
+        else
+        {
+            _logger.LogInformation(
+                """
+                [{ExecutionId}] Kubectl command succeeded.
+                OutputLength: {OutputLength}
+                """,
+                executionId,
+                output.Length);
+        }
 
         return string.IsNullOrWhiteSpace(error)
             ? output

@@ -14,7 +14,7 @@ public static class AgentServiceExtensions
     public static IServiceCollection AddAgents(this IServiceCollection services)
     {
         services.AddScoped<IAgent, DeploymentAgent>();
-        services.AddScoped<RootReviewerAgent>();
+        services.AddScoped<IAgent, RootReviewerAgent>();
         services.AddScoped<IAgent, InfrastructureAgent>();
         services.AddScoped<OrchestratorAgent>();
         services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
