@@ -21,7 +21,7 @@ public class WorkflowEngine
             concatenatedResults += $"\n\n According to Agent: {step.AgentName} \n\n task: {step.Task} \n\n result: {result}";
         }
 
-        string rootResult = await _agentClient.ExecuteAsync("RootReviewer", concatenatedResults);
+        string rootResult = await _agentClient.ExecuteAsync("RootReviewerAgent", concatenatedResults);
         return rootResult;
     }
 }

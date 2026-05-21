@@ -3,7 +3,7 @@ using Microsoft.Extensions.AI;
 
 namespace Agents.Agents.Infrastructure;
 
-public class InfrastructureAgent
+public class InfrastructureAgent: IAgent
 {
     private readonly IChatClient _chatClient;
 
@@ -11,6 +11,21 @@ public class InfrastructureAgent
     {
         _chatClient = chatClient;
     }
+
+    public string Name => "InfrastructureAgent";
+
+    public string Description =>
+    """
+    Handles:
+    - cluster analysis
+    - nodes
+    - pods
+    - deployments
+    - logs
+    - events
+    - configmaps
+    - secrets
+    """;
 
     public async Task<string> AnalyzeAsync(string query)
     {

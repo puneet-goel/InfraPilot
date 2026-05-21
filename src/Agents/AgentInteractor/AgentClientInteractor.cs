@@ -1,34 +1,26 @@
-﻿using Agents.Agents.Infrastructure;
-using Agents.Agents.RootReviewer;
+﻿using Agents.Agents;
 
 namespace Agents.AgentInteractor;
 
 public class AgentClientInteractor : IAgentClientInteractor
 {
-    private readonly InfrastructureAgent _infraAgent;
-    private readonly RootReviewerAgent _rootReviewerAgent;
+    private readonly IEnumerable<IAgent> _agents;
 
-    public AgentClientInteractor(InfrastructureAgent infraAgent, RootReviewerAgent rootReviewerAgent)
+    public AgentClientInteractor(IEnumerable<IAgent> agents)
     {
-        _infraAgent = infraAgent;
-        _rootReviewerAgent = rootReviewerAgent;
+        _agents = agents;
     }
 
     public async Task<string> ExecuteAsync(string agentName, string task)
     {
-        string result =
-            agentName switch
-            {
-                "InfrastructureAgent" =>
-                   await _infraAgent.AnalyzeAsync(task),
+        IAgent? agent = _agents.FirstOrDefault(a => a.Name.Equals(
+            agentName,
+            StringComparison.OrdinalIgnoreCase));
 
-                "RootReviewer" =>
-                   await _rootReviewerAgent.AnalyzeAsync(task),
-
-                _ => throw new Exception(
-                    $"Unknown agent: {agentName}")
-            };
-
-        return result;
+        return agent is null
+            ? throw new Exception(
+                $"Unknown agent: {agentName}")
+            : await agent
+            .AnalyzeAsync(task);
     }
 }

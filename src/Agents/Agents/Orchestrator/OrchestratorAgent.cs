@@ -8,49 +8,53 @@ public class OrchestratorAgent
 {
     private readonly IChatClient _chatClient;
 
-    public OrchestratorAgent(IChatClient chatClient)
+    private readonly IEnumerable<IAgent> _agents;
+
+    public OrchestratorAgent(IChatClient chatClient, IEnumerable<IAgent> agents)
     {
         _chatClient = chatClient;
+        _agents = agents;
     }
 
-    public async Task<WorkflowPlan> CreatePlanAsync(
-        string userRequest)
+    public async Task<WorkflowPlan> CreatePlanAsync(string userRequest)
     {
-        var prompt =
-            $$"""
-            You are an AI orchestrator. Decide which agents should execute the request on the basis of userRequest.
+        string agentDescriptions = string.Join("\n\n", 
+            _agents.Select(agent => $$"""
+            Agent: {{agent.Name}}
+            Responsibilities: {{agent.Description}} 
+            """));
 
+        string prompt = $$"""
+            You are an AI orchestrator.
+            
+            Decide which agents should execute
+            the request.
+                
             Available agents:
 
-            1. InfrastructureAgent
-               - cluster
-               - nodes
-               - pods
-               - deployments
-               - configmaps
-               - secrets
-               - description of these resources
-               - logs
-               - events
+            {{agentDescriptions}}
 
             Return ONLY raw JSON.
+
             Do NOT use markdown.
-            Do NOT wrap response in ```json.
 
             Example:
             {
               "steps": [
                 {
-                  "agentName": "InfrastructureAgent",
-                  "task": "Analyze deployment health"
+                  "agentName":
+                    "InfrastructureAgent",
+
+                  "task":
+                    "Analyze deployment health"
                 }
               ]
             }
 
-            if query is unrelated then give the response back like this
+            If query is unrelated:
             {
               "steps": []
-            } 
+            }
 
             User Request:
             {{userRequest}}
@@ -60,9 +64,15 @@ public class OrchestratorAgent
             await _chatClient.GetResponseAsync(
                 prompt);
 
+        string cleaned =
+            response.Text
+                .Replace("```json", "")
+                .Replace("```", "")
+                .Trim();
+
         WorkflowPlan plan =
             JsonSerializer.Deserialize<WorkflowPlan>(
-                response.Text,
+                cleaned,
                 new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true
@@ -71,9 +81,3 @@ public class OrchestratorAgent
         return plan ?? new WorkflowPlan();
     }
 }
-
-//2. SecurityAgent
-//               - deployment security
-//               - insecure configurations
-//               - missing probes
-//               - privileged containers

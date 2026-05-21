@@ -1,4 +1,6 @@
 ﻿using Agents.AgentInteractor;
+using Agents.Agents;
+using Agents.Agents.Deployment;
 using Agents.Agents.Infrastructure;
 using Agents.Agents.Orchestrator;
 using Agents.Agents.RootReviewer;
@@ -11,8 +13,9 @@ public static class AgentServiceExtensions
 {
     public static IServiceCollection AddAgents(this IServiceCollection services)
     {
-        services.AddScoped<InfrastructureAgent>();
+        services.AddScoped<IAgent, DeploymentAgent>();
         services.AddScoped<RootReviewerAgent>();
+        services.AddScoped<IAgent, InfrastructureAgent>();
         services.AddScoped<OrchestratorAgent>();
         services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
         services.AddScoped<WorkflowEngine>();
