@@ -4,7 +4,7 @@ using Agents.Agents.Deployment;
 using Agents.Agents.Infrastructure;
 using Agents.Agents.Orchestrator;
 using Agents.Agents.RootReviewer;
-using Agents.Workflow;
+using Agents.Engine;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Agents.RegisterServices;
@@ -18,7 +18,7 @@ public static class AgentServiceExtensions
         services.AddScoped<IAgent, InfrastructureAgent>();
         services.AddScoped<OrchestratorAgent>();
         services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
-        services.AddScoped<WorkflowEngine>();
+        services.AddScoped<IWorkflowEngine, WorkflowEngine>();
 
         return services;
     }

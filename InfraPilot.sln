@@ -30,6 +30,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Servers", "Servers", "{ED71
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeploymentMCP", "src\Servers\DeploymentMCP\DeploymentMCP.csproj", "{776E9622-5CFD-4280-A195-4AAD9F064CD8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database", "src\Database\Database.csproj", "{909E698F-F2C4-49D1-86C2-CF8573047764}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{776E9622-5CFD-4280-A195-4AAD9F064CD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{776E9622-5CFD-4280-A195-4AAD9F064CD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{776E9622-5CFD-4280-A195-4AAD9F064CD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{909E698F-F2C4-49D1-86C2-CF8573047764}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{909E698F-F2C4-49D1-86C2-CF8573047764}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{909E698F-F2C4-49D1-86C2-CF8573047764}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{909E698F-F2C4-49D1-86C2-CF8573047764}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -62,6 +68,7 @@ Global
 		{BE05262B-D8A3-4198-B551-D3901CB9C74C} = {ED71B8AC-BC50-45A9-A624-466D9523BAC0}
 		{ED71B8AC-BC50-45A9-A624-466D9523BAC0} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{776E9622-5CFD-4280-A195-4AAD9F064CD8} = {ED71B8AC-BC50-45A9-A624-466D9523BAC0}
+		{909E698F-F2C4-49D1-86C2-CF8573047764} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F4A402B2-982D-44BB-A8EC-5F5705225BF4}

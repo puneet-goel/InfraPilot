@@ -1,5 +1,5 @@
-﻿using Agents.Agents.Orchestrator;
-using Agents.Workflow;
+﻿using Api.Application.Interface;
+using Database.Domain;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers;
@@ -8,20 +8,38 @@ namespace Api.Controllers;
 [Route("workflow")]
 public class WorkflowController : ControllerBase
 {
-    private readonly OrchestratorAgent _orchestratorAgent;
-    private readonly WorkflowEngine _workflowEngine;
+    private readonly IWorkflowService _workflowService;
 
-    public WorkflowController(OrchestratorAgent orchestratorAgent, WorkflowEngine workflowClient)
+    public WorkflowController(IWorkflowService workflowService)
     {
-        _orchestratorAgent = orchestratorAgent;
-        _workflowEngine = workflowClient;
+        _workflowService = workflowService;
     }
 
-    [HttpPost("investigate")]
-    public async Task<IActionResult> Investigate([FromBody] string request)
+    [HttpPost("create")]
+    public async Task<IActionResult> Create([FromBody] string request)
     {
-        WorkflowPlan plan = await _orchestratorAgent.CreatePlanAsync(request);
-        string result = await _workflowEngine.ExecuteAsync(plan);
-        return Ok(result);
+        CreateWorkflow workflow = await _workflowService.CreateWorkflowAsync(request);
+        return Ok(workflow);
+    }
+
+    [HttpGet("get")]
+    public async Task<IActionResult> Get([FromQuery] string id)
+    {
+        GetWorkflow? workflow = await _workflowService.GetWorkflowAsync(id);
+        return Ok(workflow);
+    }
+
+    [HttpGet("getAll")]
+    public async Task<IActionResult> GetAll()
+    {
+        List<GetWorkflow> workflows = await _workflowService.GetAllWorkflowAsync();
+        return Ok(workflows);
+    }
+
+    [HttpGet("run")]
+    public IActionResult RunWorkflow(string workflowId)
+    {
+        _workflowService.RunWorkflow(workflowId);
+        return Ok("Workflow Submitted Successfully!");
     }
 }

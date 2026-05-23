@@ -1,9 +1,10 @@
 ﻿using Agents.AgentInteractor;
 using Agents.Agents;
+using Agents.Workflow;
 
-namespace Agents.Workflow;
+namespace EngineWorker.Engine;
 
-public class WorkflowEngine
+public class WorkflowEngine: IWorkflowEngine
 {
     private readonly IAgentClientInteractor _agentClient;
     private readonly IEnumerable<IAgent> _agents;

@@ -11,3 +11,10 @@ public class WorkflowPlan
 {
     public List<WorkflowStep> Steps { get; set; } = [];
 }
+
+public class WorkflowStepResult
+{
+    public string AgentName { get; set; } = "";
+
+    public string Output { get; set; } = "";
+}

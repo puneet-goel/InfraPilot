@@ -1,4 +1,9 @@
 using Agents.RegisterServices;
+using Api.Application.Interface;
+using Api.Application.Service;
+using Database;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
@@ -36,12 +41,26 @@ builder.Services.AddSingleton<IChatClient>(sp =>
         .Build();
 });
 
+builder.Services.AddScoped<IWorkflowService, WorkflowService>();
+builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
+
+builder.Services.AddAgentDB(builder.Configuration.GetConnectionString("Postgres")!);
+
+builder.Services.AddHangfire(config =>
+{
+    config.UsePostgreSqlStorage(options => options.UseNpgsqlConnection(
+        builder.Configuration.GetConnectionString("Postgres")));
+});
+
+builder.Services.AddHangfireServer();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseHangfireDashboard();
 }
 
 app.UseHttpsRedirection();
