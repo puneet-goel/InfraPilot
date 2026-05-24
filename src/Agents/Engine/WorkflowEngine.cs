@@ -1,5 +1,6 @@
 ﻿using Agents.AgentInteractor;
 using Agents.Agents;
+using Agents.Agents.Orchestrator;
 using Agents.Workflow;
 using Database.Domain;
 using Database.Repository.Interfaces;
@@ -12,22 +13,27 @@ public class WorkflowEngine: IWorkflowEngine
 {
     private readonly IAgentClientInteractor _agentClient;
     private readonly IEnumerable<IAgent> _agents;
+    private readonly OrchestratorAgent _orchestratorAgent;
     private readonly IWorkflowRepository _workflowRepository;
     private readonly IWorkflowExecutionRepository _workflowExecutionRepository;
 
-    public WorkflowEngine(IAgentClientInteractor agentClient, IEnumerable<IAgent> agents, IWorkflowRepository workflowRepository, IWorkflowExecutionRepository workflowExecutionRepository)
+    public WorkflowEngine(IAgentClientInteractor agentClient, IEnumerable<IAgent> agents, IWorkflowRepository workflowRepository, IWorkflowExecutionRepository workflowExecutionRepository, OrchestratorAgent orchestratorAgent)
     {
         _agentClient = agentClient;
         _agents = agents;
         _workflowRepository = workflowRepository;
         _workflowExecutionRepository = workflowExecutionRepository;
+        _orchestratorAgent = orchestratorAgent;
     }
 
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid workflowId)
     {
-        Guid executorId = await _workflowExecutionRepository.InsertWorkflowExecutionAsync(workflowId);
+        Guid executorId = new();
         bool error = false;
+        string concatenatedResults = string.Empty;
+        WorkflowPlanResult results = new();
+        string result = string.Empty;
 
         try
         {
@@ -35,14 +41,15 @@ public class WorkflowEngine: IWorkflowEngine
 
             if (workflow == null)
             {
-                throw new Exception("No workflow present with given id");
+                throw new Exception($"No workflow present with given {workflowId}");
             }
 
-            WorkflowPlan workflowPlan = JsonSerializer.Deserialize<WorkflowPlan>(workflow.Plan)!;
+            executorId = await _workflowExecutionRepository.InsertWorkflowExecutionAsync(workflowId);
 
-            string concatenatedResults = string.Empty;
-            List<WorkflowStepResult> results = [];
-            string result = string.Empty;
+            WorkflowPlan workflowPlan = await _orchestratorAgent.CreatePlanAsync(workflow.UserRequest);
+            await _workflowRepository.UpdateWorkflowAsync(workflowId, JsonSerializer.Serialize(workflowPlan));
+
+            results.RuntimeEnvironment = workflowPlan.RuntimeEnvironment;
 
             bool isWriteAgent = workflowPlan.Steps.Any(step =>
                 _agents.Any(agent =>
@@ -51,7 +58,7 @@ public class WorkflowEngine: IWorkflowEngine
             foreach (WorkflowStep step in workflowPlan.Steps)
             {
                 result = await _agentClient.ExecuteAsync(step.AgentName, step.Task);
-                results.Add(new()
+                results.Steps.Add(new()
                 {
                     AgentName = step.AgentName,
                     Output = result
@@ -64,7 +71,7 @@ public class WorkflowEngine: IWorkflowEngine
             if (!isWriteAgent)
             {
                 string rootResult = await _agentClient.ExecuteAsync("RootReviewerAgent", concatenatedResults);
-                results.Add(new()
+                results.Steps.Add(new()
                 {
                     AgentName = "RootReviewerAgent",
                     Output = rootResult

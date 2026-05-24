@@ -24,7 +24,7 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
             WorkflowId = workflowId,
             UpdatedAt = DateTime.UtcNow,
             AgentOutput = JsonSerializer.Serialize(new List<string>()),
-            CurrentAgent = string.Empty,
+            CurrentAgent = "OrchestratorAgent",
             Status = "Started",
             Reason = string.Empty
         };

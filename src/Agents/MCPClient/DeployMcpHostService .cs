@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 
-namespace Agents.MCP;
+namespace Agents.MCPClient;
 
 public class DeployMcpHostService
 {

@@ -23,10 +23,9 @@ builder.Services.AddAgents();
 builder.Services.AddSingleton<IChatClient>(sp =>
 {
     IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
-
-    string url = configuration["AI:baseUrl"]!;
-    string model = configuration["AI:model"]!;
-    string cred = configuration["AI:cred"]!;
+    string url = Environment.GetEnvironmentVariable("LLM_BASE_URL")!;
+    string model = Environment.GetEnvironmentVariable("LLM_MODEL")!;
+    string cred = Environment.GetEnvironmentVariable("LLM_CRED")!;
 
     OpenAIClient client = new (
         new ApiKeyCredential(cred),
@@ -44,24 +43,35 @@ builder.Services.AddSingleton<IChatClient>(sp =>
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
 
-builder.Services.AddAgentDB(builder.Configuration.GetConnectionString("Postgres")!);
+builder.Services.AddAgentDB(Environment.GetEnvironmentVariable("POSTGRES")!);
 
 builder.Services.AddHangfire(config =>
 {
     config.UsePostgreSqlStorage(options => options.UseNpgsqlConnection(
-        builder.Configuration.GetConnectionString("Postgres")));
+        Environment.GetEnvironmentVariable("POSTGRES")));
 });
 
 builder.Services.AddHangfireServer();
 
 WebApplication app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// exposed intentionally
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseHangfireDashboard();
+
+app.MapGet("/api/health", () =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseHangfireDashboard();
-}
+    return Results.Ok(new
+    {
+        Status = "InfraPilot API Running"
+    });
+});
+
+// serving ui
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.MapFallbackToFile("index.html");
 
 app.UseHttpsRedirection();
 

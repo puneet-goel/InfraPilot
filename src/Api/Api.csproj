@@ -22,4 +22,25 @@
 		<ProjectReference Include="..\Database\Database.csproj" />
 	</ItemGroup>
 
+	<Target Name="BuildFrontend" AfterTargets="Publish">
+
+		<Exec WorkingDirectory="../Frontend" Command="npm install" />
+
+		<Exec WorkingDirectory="../Frontend" Command="npm run build" />
+
+		<RemoveDir Directories="wwwroot" />
+
+		<MakeDir Directories="wwwroot" />
+
+		<ItemGroup>
+			<FrontendDist Include="../Frontend/dist/**" />
+		</ItemGroup>
+
+		<Copy
+			SourceFiles="@(FrontendDist)"
+			DestinationFiles="@(FrontendDist->'wwwroot/%(RecursiveDir)%(Filename)%(Extension)')"
+			SkipUnchangedFiles="true" />
+
+	</Target>
+
 </Project>

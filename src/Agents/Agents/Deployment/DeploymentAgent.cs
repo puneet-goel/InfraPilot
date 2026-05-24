@@ -1,4 +1,4 @@
-﻿using Agents.MCP;
+﻿using Agents.MCPClient;
 using Microsoft.Extensions.AI;
 
 namespace Agents.Agents.Deployment;
