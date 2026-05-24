@@ -2,20 +2,20 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  plugins: [react()],
+	plugins: [react()],
+	build: {
+		outDir: 'dist'
+	},
 
-  build: {
-    outDir: 'dist'
-  },
+	server: {
+		port: 5173,
 
-  server: {
-    port: 5173,
-
-    proxy: {
-      '/api': {
-        target: 'https://localhost:7261',
-        secure: false
-      }
-    }
-  }
+		proxy: {
+			'/api': {
+				target: 'https://localhost:7261',
+				changeOrigin: true,
+				secure: false
+			}
+		}
+	}
 })

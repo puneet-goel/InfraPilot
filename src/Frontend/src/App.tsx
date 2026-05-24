@@ -1,28 +1,21 @@
-import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from 'react-router-dom'
+import Home from './components/home/home'
+import AppNavbar from './components/appNavbar/appNavbar'
+import FloatingSwitcher from './components/floatingSwitcher/floatingSwitcher'
+import Workflow from './components/workflows/workflows'
 
-function App() {
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    fetch("/api/health")
-      .then(res => res.json())
-      .then(data => {
-        setMessage(data.status);
-      });
-  }, []);
-
-  return (
-    <div
-      style={{
-        padding: "40px",
-        fontFamily: "Arial"
-      }}
-    >
-      <h1>InfraPilot UI</h1>
-
-      <p>{message}</p>
-    </div>
-  );
+const App = () => {
+	return (
+		<>
+			<AppNavbar />
+			<Routes>
+				<Route path='/' element={<Home />} />
+				<Route path='/workflows' element={<Workflow />} />
+				<Route path='*' element={<Navigate to='/' replace />} />
+			</Routes>
+			<FloatingSwitcher />
+		</>
+	)
 }
 
-export default App;
+export default App

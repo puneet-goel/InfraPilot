@@ -4,6 +4,7 @@ using Api.Application.Service;
 using Database;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
@@ -55,18 +56,19 @@ builder.Services.AddHangfireServer();
 
 WebApplication app = builder.Build();
 
+// Rewrite /api/workflow -> /workflow
+var rewriteOptions = new RewriteOptions()
+    .AddRewrite(
+        @"^api/(.*)",
+        "$1",
+        skipRemainingRules: true);
+
+app.UseRewriter(rewriteOptions);
+
 // exposed intentionally
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHangfireDashboard();
-
-app.MapGet("/api/health", () =>
-{
-    return Results.Ok(new
-    {
-        Status = "InfraPilot API Running"
-    });
-});
 
 // serving ui
 app.UseDefaultFiles();
