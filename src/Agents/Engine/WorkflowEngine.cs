@@ -47,17 +47,46 @@ public class WorkflowEngine: IWorkflowEngine
             executorId = await _workflowExecutionRepository.InsertWorkflowExecutionAsync(workflowId);
 
             WorkflowPlan workflowPlan = await _orchestratorAgent.CreatePlanAsync(workflow.UserRequest);
-            await _workflowRepository.UpdateWorkflowAsync(workflowId, JsonSerializer.Serialize(workflowPlan));
-
             results.RuntimeEnvironment = workflowPlan.RuntimeEnvironment;
+
+            workflowPlan.Steps.Insert(0, new WorkflowStep()
+            {
+                Task = "Generate a workflow/plan for the user request.",
+                AgentName = "OrchestratorAgent"
+            });
 
             bool isWriteAgent = workflowPlan.Steps.Any(step =>
                 _agents.Any(agent =>
                 agent.Name == step.AgentName && agent.IsWriteAgent));
 
+            if(!isWriteAgent)
+            {
+                workflowPlan.Steps.Add(new WorkflowStep()
+                {
+                    Task = "Analyse the final findings.",
+                    AgentName = "RootReviewerAgent"
+                });
+            }
+
+            // update plan in db
+            await _workflowRepository.UpdateWorkflowAsync(workflowId, JsonSerializer.Serialize(workflowPlan));
+
             foreach (WorkflowStep step in workflowPlan.Steps)
             {
-                result = await _agentClient.ExecuteAsync(step.AgentName, step.Task);
+                if(step.AgentName == "OrchestratorAgent")
+                {
+                    continue;
+                }
+
+                if (step.AgentName == "RootReviewerAgent")
+                {
+                    result = await _agentClient.ExecuteAsync(step.AgentName, concatenatedResults);
+                }
+                else
+                {
+                    result = await _agentClient.ExecuteAsync(step.AgentName, step.Task);
+                }
+
                 results.Steps.Add(new()
                 {
                     AgentName = step.AgentName,
@@ -66,17 +95,6 @@ public class WorkflowEngine: IWorkflowEngine
 
                 concatenatedResults += $"\n\n According to Agent: {step.AgentName} \n\n task: {step.Task} \n\n result: {result}";
                 await _workflowExecutionRepository.UpdateWorkflowExecutionAgent(executorId, step.AgentName, JsonSerializer.Serialize(results));
-            }
-
-            if (!isWriteAgent)
-            {
-                string rootResult = await _agentClient.ExecuteAsync("RootReviewerAgent", concatenatedResults);
-                results.Steps.Add(new()
-                {
-                    AgentName = "RootReviewerAgent",
-                    Output = rootResult
-                });
-                await _workflowExecutionRepository.UpdateWorkflowExecutionAgent(executorId, "RootReviewerAgent", JsonSerializer.Serialize(results));
             }
         }
         catch (Exception ex)

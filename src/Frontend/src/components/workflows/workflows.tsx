@@ -1,206 +1,193 @@
-import { Box, Chip, Container, Paper, Stack, Typography } from '@mui/material'
+import { Box, Chip, IconButton, Paper, Stack, Typography } from '@mui/material'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { useGetWorkflowExecutions } from '../../hooks/useGetWorkflowExecution'
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
+import { useState } from 'react'
+import type { WorkflowExecution } from '../../models/models'
+import PlanDialogBox from '../gridFormatters/planDialogBox'
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded'
+import ReRunDialogBox from '../gridFormatters/reRunDialogBox'
+import Tooltip from '@mui/material/Tooltip'
 
-type Workflow = {
-	id: string
-
-	workflowName: string
-
-	status: string
-
-	createdBy: string
-
-	createdAt: string
-
-	updatedAt: string
-
-	currentAgent: string
-}
-
-const workflows: Workflow[] = [
-	{
-		id: 'wf-1001',
-
-		workflowName: 'Investigate nginx restart issue',
-
-		status: 'Running',
-
-		createdBy: 'Puneet',
-
-		createdAt: '2026-05-24 10:12',
-
-		updatedAt: '2026-05-24 10:15',
-
-		currentAgent: 'InfrastructureAgent'
-	},
-
-	{
-		id: 'wf-1002',
-
-		workflowName: 'Analyze payment namespace security',
-
-		status: 'WaitingApproval',
-
-		createdBy: 'Puneet',
-
-		createdAt: '2026-05-24 09:55',
-
-		updatedAt: '2026-05-24 10:00',
-
-		currentAgent: 'SecurityAgent'
-	},
-
-	{
-		id: 'wf-1003',
-
-		workflowName: 'Scale redis deployment',
-
-		status: 'Completed',
-
-		createdBy: 'Puneet',
-
-		createdAt: '2026-05-24 08:20',
-
-		updatedAt: '2026-05-24 08:28',
-
-		currentAgent: 'DeploymentAgent'
-	},
-
-	{
-		id: 'wf-1004',
-
-		workflowName: 'Delete failed ingress resources',
-
-		status: 'Failed',
-
-		createdBy: 'Puneet',
-
-		createdAt: '2026-05-24 07:10',
-
-		updatedAt: '2026-05-24 07:14',
-
-		currentAgent: 'CleanupAgent'
-	}
-]
-
-function getStatusStyles(status: string) {
+const getStatusStyles = (status: string) => {
 	switch (status) {
+		case 'Started':
 		case 'Running':
 			return {
 				background: 'rgba(37,99,235,0.15)',
-
 				color: '#60a5fa'
 			}
 
 		case 'Completed':
 			return {
 				background: 'rgba(22,163,74,0.15)',
-
 				color: '#4ade80'
 			}
 
 		case 'Failed':
 			return {
 				background: 'rgba(220,38,38,0.15)',
-
 				color: '#f87171'
 			}
 
 		case 'WaitingApproval':
 			return {
 				background: 'rgba(245,158,11,0.15)',
-
 				color: '#facc15'
 			}
 
 		default:
 			return {
 				background: 'rgba(255,255,255,0.08)',
-
 				color: 'white'
 			}
 	}
 }
 
-const columns: GridColDef[] = [
-	{
-		field: 'id',
+const Workflow = () => {
+	const { data: workflowExecutions = [] } = useGetWorkflowExecutions()
+	const [planDialogOpen, setPlanDialogOpen] = useState(false)
+	const [selectedWorkflow, setSelectedWorkflow] =
+		useState<WorkflowExecution | null>(null)
+	const [rerunDialogOpen, setRerunDialogOpen] = useState(false)
 
-		headerName: 'Workflow Id',
+	const columns: GridColDef[] = [
+		{
+			field: 'workflowId'
+		},
+		{
+			field: 'executionId'
+		},
+		{
+			field: 'userRequest',
+			headerName: 'User Request',
+			flex: 2.5
+		},
+		{
+			field: 'status',
+			headerName: 'Status',
+			flex: 1,
+			renderCell: (params) => {
+				const styles = getStatusStyles(params.value)
+				return (
+					<Chip
+						label={params.value}
+						size='small'
+						sx={{
+							bgcolor: styles.background,
+							color: styles.color,
+							fontWeight: 700,
+							borderRadius: 999
+						}}
+					/>
+				)
+			}
+		},
+		{
+			field: 'currentAgent',
+			headerName: 'Current Agent',
+			flex: 1.2
+		},
+		{
+			field: 'agentOutput',
+			headerName: 'Agent Output',
+			flex: 1.3
+		},
+		{
+			field: 'workflowPlan',
+			headerName: 'Plan',
+			flex: 0.8,
+			sortable: false,
+			renderCell: (params) => {
+				return (
+					<Tooltip title='View Workflow Plan' arrow>
+						<IconButton
+							onClick={() => {
+								setSelectedWorkflow(params.row)
+								setPlanDialogOpen(true)
+							}}
+							sx={{
+								color: '#60a5fa',
+								'&:hover': {
+									background: 'rgba(37,99,235,0.12)'
+								}
+							}}
+						>
+							<VisibilityRoundedIcon />
+						</IconButton>
+					</Tooltip>
+				)
+			}
+		},
+		{
+			field: 'createdAt',
+			headerName: 'Created At',
+			type: 'dateTime',
+			flex: 1.2,
+			valueGetter: (value) => value && new Date(value),
+			valueFormatter: (value) => {
+				if (!value) {
+					return ''
+				}
 
-		flex: 1.2
-	},
+				return new Intl.DateTimeFormat('en-IN', {
+					day: '2-digit',
+					month: 'short',
+					year: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}).format(value)
+			}
+		},
+		{
+			field: 'updatedAt',
+			headerName: 'Updated At',
+			type: 'dateTime',
+			flex: 1.2,
+			valueGetter: (value) => value && new Date(value),
+			valueFormatter: (value) => {
+				if (!value) {
+					return ''
+				}
 
-	{
-		field: 'workflowName',
-
-		headerName: 'Workflow',
-
-		flex: 2.5
-	},
-
-	{
-		field: 'status',
-
-		headerName: 'Status',
-
-		flex: 1.2,
-
-		renderCell: (params) => {
-			const styles = getStatusStyles(params.value)
-
-			return (
-				<Chip
-					label={params.value}
-					size='small'
-					sx={{
-						bgcolor: styles.background,
-
-						color: styles.color,
-
-						fontWeight: 700,
-
-						borderRadius: 999
-					}}
-				/>
-			)
+				return new Intl.DateTimeFormat('en-IN', {
+					day: '2-digit',
+					month: 'short',
+					year: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}).format(value)
+			}
+		},
+		{
+			field: 'actions',
+			headerName: 'Actions',
+			flex: 1,
+			sortable: false,
+			filterable: false,
+			renderCell: (params) => {
+				return (
+					<Tooltip title='Re-run workflow' arrow>
+						<IconButton
+							onClick={() => {
+								setSelectedWorkflow(params.row)
+								setRerunDialogOpen(true)
+							}}
+							sx={{
+								color: '#60a5fa',
+								'&:hover': {
+									background: 'rgba(37,99,235,0.12)'
+								}
+							}}
+						>
+							<ReplayRoundedIcon />
+						</IconButton>
+					</Tooltip>
+				)
+			}
 		}
-	},
+	]
 
-	{
-		field: 'currentAgent',
-
-		headerName: 'Current Agent',
-
-		flex: 1.5
-	},
-
-	{
-		field: 'createdBy',
-
-		headerName: 'Created By',
-
-		flex: 1
-	},
-
-	{
-		field: 'createdAt',
-
-		headerName: 'Created',
-
-		flex: 1.3
-	},
-
-	{
-		field: 'updatedAt',
-
-		headerName: 'Updated',
-
-		flex: 1.3
-	}
-]
-
-export default function Workflow() {
 	return (
 		<Box
 			sx={{
@@ -210,13 +197,13 @@ export default function Workflow() {
 				flexDirection: 'column'
 			}}
 		>
-			<Container
-				maxWidth='xl'
+			<Box
 				sx={{
 					flex: 1,
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
+					mx: 3,
 					py: 6,
 					flexDirection: 'column'
 				}}
@@ -300,10 +287,15 @@ export default function Workflow() {
 					}}
 				>
 					<DataGrid
-						rows={workflows}
+						rows={workflowExecutions}
 						columns={columns}
 						disableRowSelectionOnClick
 						pageSizeOptions={[5, 10, 20]}
+						getRowId={(row) => row.executionId}
+						columnVisibilityModel={{
+							executionId: false,
+							workflowId: false
+						}}
 						initialState={{
 							pagination: {
 								paginationModel: {
@@ -313,9 +305,7 @@ export default function Workflow() {
 						}}
 						sx={{
 							border: 'none',
-
 							color: 'white',
-
 							backgroundColor: 'transparent',
 
 							'--DataGrid-containerBackground': '#0f172a',
@@ -421,7 +411,21 @@ export default function Workflow() {
 						}}
 					/>
 				</Paper>
-			</Container>
+
+				<PlanDialogBox
+					planDialogOpen={planDialogOpen}
+					setPlanDialogOpen={setPlanDialogOpen}
+					selectedWorkflow={selectedWorkflow}
+				/>
+
+				<ReRunDialogBox
+					rerunDialogOpen={rerunDialogOpen}
+					setRerunDialogOpen={setRerunDialogOpen}
+					selectedWorkflow={selectedWorkflow}
+				/>
+			</Box>
 		</Box>
 	)
 }
+
+export default Workflow

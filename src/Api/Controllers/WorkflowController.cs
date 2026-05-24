@@ -36,10 +36,10 @@ public class WorkflowController : ControllerBase
         return Ok(workflows);
     }
 
-    [HttpGet("run")]
-    public IActionResult RunWorkflow(string workflowId)
+    [HttpPost("run")]
+    public IActionResult RunWorkflow([FromBody] string workflowId)
     {
         _workflowService.RunWorkflow(workflowId);
-        return Ok("Workflow Submitted Successfully!");
+        return Ok(new object());
     }
 }

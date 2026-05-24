@@ -25,7 +25,7 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
             UpdatedAt = DateTime.UtcNow,
             AgentOutput = JsonSerializer.Serialize(new List<string>()),
             CurrentAgent = "OrchestratorAgent",
-            Status = "Started",
+            Status = "Running",
             Reason = string.Empty
         };
 
@@ -63,7 +63,12 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
         WorkflowExecutionEntity? entity = await _dbContext.WorkflowExecution.FirstOrDefaultAsync(e => e.Id == workflowId);
         return (entity == null) ? null : new()
         {
+            ExecutionId = entity.Id,
             WorkflowId = entity.WorkflowId,
+            UserRequest = entity.Workflow.UserRequest,
+            WorkflowPlan = entity.Workflow.Plan,
+            CreatedAt = entity.Workflow.CreatedAt,
+            UpdatedAt = entity.Workflow.UpdatedAt,
             Status = entity.Status,
             Reason = entity.Reason,
             CurrentAgent = entity.CurrentAgent,
@@ -76,9 +81,13 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
         return await _dbContext.WorkflowExecution
             .Select(entity => new GetWorkflowExecution()
             {
+                ExecutionId = entity.Id,
                 WorkflowId = entity.WorkflowId,
+                UserRequest = entity.Workflow.UserRequest,
+                WorkflowPlan = entity.Workflow.Plan,
+                CreatedAt = entity.Workflow.CreatedAt,
+                UpdatedAt = entity.Workflow.UpdatedAt,
                 Status = entity.Status,
-                Reason = entity.Reason,
                 CurrentAgent = entity.CurrentAgent,
                 AgentOutput = entity.AgentOutput
             })

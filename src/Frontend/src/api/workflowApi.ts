@@ -1,12 +1,20 @@
+import type { WorkflowExecution } from '../models/models'
 import { api } from './client'
 
-export const getWorkflows = async () => {
-	return api<any[]>('/workflow/get')
+export const getAllWorkflowExecutions = async () => {
+	return api<WorkflowExecution[]>('/workflowExecution/getAll')
 }
 
 export const createWorkflow = async (prompt: string) => {
 	return api('/workflow/create', {
 		method: 'POST',
-		body: prompt
+		body: JSON.stringify(prompt)
+	})
+}
+
+export const rerunWorkflow = async (workflowId: string) => {
+	return api(`/workflow/run`, {
+		method: 'POST',
+		body: JSON.stringify(workflowId)
 	})
 }

@@ -11,14 +11,33 @@ import {
 import SendRoundedIcon from '@mui/icons-material/SendRounded'
 import { useState } from 'react'
 import { useCreateWorkflow } from '../../hooks/useCreateWorkflow'
+import { enqueueSnackbar } from 'notistack'
 
 const Home = () => {
 	const [prompt, setPrompt] = useState('')
 	const createWorkflow = useCreateWorkflow()
 
 	const handleOnSubmit = async () => {
-		const data = await createWorkflow.mutateAsync(prompt)
-		console.log(data)
+		try {
+			await createWorkflow.mutateAsync(prompt)
+			setPrompt('')
+			enqueueSnackbar('Workflow created successfully!', {
+				variant: 'success',
+				anchorOrigin: {
+					vertical: 'top',
+					horizontal: 'right'
+				}
+			})
+		} catch (err){
+			console.error('Error while submitting workflow:', err)
+			enqueueSnackbar('Error while submitting workflow', {
+				variant: 'error',
+				anchorOrigin: {
+					vertical: 'top',
+					horizontal: 'right'
+				}
+			})
+		}
 	}
 
 	return (

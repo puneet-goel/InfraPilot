@@ -9,7 +9,7 @@ const useCreateWorkflow = () => {
 
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({
-				queryKey: ['workflows']
+				queryKey: ['getAllWorkflowExecutions']
 			})
 		}
 	})
