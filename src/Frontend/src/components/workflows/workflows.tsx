@@ -449,23 +449,29 @@ const Workflow = () => {
 					/>
 				</Paper>
 
-				<PlanDialogBox
-					planDialogOpen={planDialogOpen}
-					setPlanDialogOpen={setPlanDialogOpen}
-					selectedWorkflow={selectedWorkflow}
-				/>
+				{selectedWorkflow && (
+					<PlanDialogBox
+						planDialogOpen={planDialogOpen}
+						setPlanDialogOpen={setPlanDialogOpen}
+						selectedWorkflow={selectedWorkflow}
+					/>
+				)}
 
-				<ReRunDialogBox
-					rerunDialogOpen={rerunDialogOpen}
-					setRerunDialogOpen={setRerunDialogOpen}
-					selectedWorkflow={selectedWorkflow}
-				/>
+				{selectedWorkflow && (
+					<ReRunDialogBox
+						rerunDialogOpen={rerunDialogOpen}
+						setRerunDialogOpen={setRerunDialogOpen}
+						selectedWorkflow={selectedWorkflow}
+					/>
+				)}
 
-				<ApprovalDialogBox
-					approvalDialogOpen={approvalDialogOpen}
-					setApprovalDialogOpen={setApprovalDialogOpen}
-					selectedWorkflow={selectedWorkflow}
-				/>
+				{selectedWorkflow && (
+					<ApprovalDialogBox
+						approvalDialogOpen={approvalDialogOpen}
+						setApprovalDialogOpen={setApprovalDialogOpen}
+						selectedWorkflow={selectedWorkflow}
+					/>
+				)}
 			</Box>
 		</Box>
 	)

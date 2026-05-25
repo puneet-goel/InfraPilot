@@ -4,6 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>d433821c-b29d-4840-9637-72238e05f503</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..</DockerfileContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,28 +29,5 @@
 		<ProjectReference Include="..\Agents\Agents.csproj" />
 		<ProjectReference Include="..\Database\Database.csproj" />
 	</ItemGroup>
-
-
-	<ItemGroup>
-	  <Folder Include="wwwroot\" />
-	</ItemGroup>
-
-	<Target Name="BuildFrontend" AfterTargets="Publish">
-
-		<Exec WorkingDirectory="../Frontend" Command="npm install" />
-
-		<Exec WorkingDirectory="../Frontend" Command="npm run build" />
-
-		<RemoveDir Directories="wwwroot" />
-
-		<MakeDir Directories="wwwroot" />
-
-		<ItemGroup>
-			<FrontendDist Include="../Frontend/dist/**" />
-		</ItemGroup>
-
-		<Copy SourceFiles="@(FrontendDist)" DestinationFiles="@(FrontendDist->'wwwroot/%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-
-	</Target>
 
 </Project>

@@ -359,9 +359,7 @@ const ApprovalDialogBox = ({
 																								</Paper>
 																							</Box>
 
-																							{/* RESULT */}
-
-																							{tool.Result && (
+																							{tool.Result ? (
 																								<Box>
 																									<Typography
 																										sx={{
@@ -398,11 +396,13 @@ const ApprovalDialogBox = ({
 																										</pre>
 																									</Paper>
 																								</Box>
+																							) : (
+																								<Box></Box>
 																							)}
 
 																							{/* EXCEPTION */}
 
-																							{tool.Exception && (
+																							{tool.Exception ? (
 																								<Box>
 																									<Typography
 																										sx={{
@@ -440,6 +440,8 @@ const ApprovalDialogBox = ({
 																										</pre>
 																									</Paper>
 																								</Box>
+																							) : (
+																								<Box></Box>
 																							)}
 																						</Stack>
 																					</Paper>
