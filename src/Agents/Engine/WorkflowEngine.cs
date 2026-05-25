@@ -1,10 +1,12 @@
 ﻿using Agents.AgentInteractor;
 using Agents.Agents;
 using Agents.Agents.Orchestrator;
+using Agents.Utility;
 using Agents.Workflow;
 using Database.Domain;
 using Database.Repository.Interfaces;
 using Hangfire;
+using Microsoft.Extensions.AI;
 using System.Text.Json;
 
 namespace Agents.Engine;
@@ -14,100 +16,156 @@ public class WorkflowEngine: IWorkflowEngine
     private readonly IAgentClientInteractor _agentClient;
     private readonly IEnumerable<IAgent> _agents;
     private readonly OrchestratorAgent _orchestratorAgent;
-    private readonly IWorkflowRepository _workflowRepository;
     private readonly IWorkflowExecutionRepository _workflowExecutionRepository;
 
-    public WorkflowEngine(IAgentClientInteractor agentClient, IEnumerable<IAgent> agents, IWorkflowRepository workflowRepository, IWorkflowExecutionRepository workflowExecutionRepository, OrchestratorAgent orchestratorAgent)
+    public WorkflowEngine(IAgentClientInteractor agentClient, IEnumerable<IAgent> agents, IWorkflowExecutionRepository workflowExecutionRepository, OrchestratorAgent orchestratorAgent)
     {
         _agentClient = agentClient;
         _agents = agents;
-        _workflowRepository = workflowRepository;
         _workflowExecutionRepository = workflowExecutionRepository;
         _orchestratorAgent = orchestratorAgent;
     }
 
     [AutomaticRetry(Attempts = 0)]
-    public async Task ExecuteAsync(Guid workflowId)
+    public async Task ExecuteAsync(Guid executorId)
     {
-        Guid executorId = new();
-        bool error = false;
-        string concatenatedResults = string.Empty;
-        WorkflowPlanResult results = new();
-        string result = string.Empty;
+        // fetch workflow details
+        GetWorkflowExecution? workflowExecution = await _workflowExecutionRepository.GetWorkflowExecutionAsync(executorId);
+        if(workflowExecution == null)
+        {
+            return;
+        }
 
         try
         {
-            GetWorkflow? workflow = await _workflowRepository.GetWorkflowAsync(workflowId);
-
-            if (workflow == null)
+            List<string> codesToStopExecution = ["Rejected", "Failed", "ApprovalRequired"];
+            if (codesToStopExecution.Contains(workflowExecution.Status))
             {
-                throw new Exception($"No workflow present with given {workflowId}");
+                return;
             }
 
-            executorId = await _workflowExecutionRepository.InsertWorkflowExecutionAsync(workflowId);
+            // workflow started
+            workflowExecution.CurrentAgent = "OrchestratorAgent";
+            workflowExecution.Status = "Running";
+            await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
 
-            WorkflowPlan workflowPlan = await _orchestratorAgent.CreatePlanAsync(workflow.UserRequest);
-            results.RuntimeEnvironment = workflowPlan.RuntimeEnvironment;
+            // construct plan
+            WorkflowPlanResult? lastOutputSaved = null;
+            WorkflowPlan workflowPlan = new();
+            int startIndex = 0;
 
-            workflowPlan.Steps.Insert(0, new WorkflowStep()
+            if (workflowExecution.AgentOutput != null)
             {
-                Task = "Generate a workflow/plan for the user request.",
-                AgentName = "OrchestratorAgent"
-            });
+                lastOutputSaved = JsonSerializer.Deserialize<WorkflowPlanResult>(workflowExecution.AgentOutput)!;
+            }
 
-            bool isWriteAgent = workflowPlan.Steps.Any(step =>
-                _agents.Any(agent =>
-                agent.Name == step.AgentName && agent.IsWriteAgent));
-
-            if(!isWriteAgent)
+            // resume state Human in the loop
+            if (lastOutputSaved != null)
             {
-                workflowPlan.Steps.Add(new WorkflowStep()
+                workflowPlan = JsonSerializer.Deserialize<WorkflowPlan>(workflowExecution.WorkflowPlan) ?? new();
+                startIndex = workflowPlan.Steps.FindIndex(ele => ele.AgentName == workflowExecution.CurrentAgent);
+
+                if(startIndex == -1)
                 {
-                    Task = "Analyse the final findings.",
-                    AgentName = "RootReviewerAgent"
+                    startIndex = 0;
+                }
+            }
+            else
+            {
+                // first step generate plan and save in db
+                workflowPlan = await _orchestratorAgent.CreatePlanAsync(workflowExecution.UserRequest);
+
+                // modify plan for user interface
+                workflowPlan.Steps.Insert(0, new WorkflowStep()
+                {
+                    Task = "Generate a workflow/plan for the user request.",
+                    AgentName = "OrchestratorAgent"
                 });
+
+                bool isWriteAgent = workflowPlan.Steps.Any(step =>
+                    _agents.Any(agent =>
+                    agent.Name == step.AgentName && agent.IsWriteAgent));
+
+                if (!isWriteAgent)
+                {
+                    workflowPlan.Steps.Add(new WorkflowStep()
+                    {
+                        Task = "Analyse the final findings.",
+                        AgentName = "RootReviewerAgent"
+                    });
+                }
+
+                // update plan in db
+                workflowExecution.WorkflowPlan = JsonSerializer.Serialize(workflowPlan);
+                await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
             }
 
-            // update plan in db
-            await _workflowRepository.UpdateWorkflowAsync(workflowId, JsonSerializer.Serialize(workflowPlan));
-
-            foreach (WorkflowStep step in workflowPlan.Steps)
+            // plan is ready at this stage
+            WorkflowPlanResult results = new()
             {
-                if(step.AgentName == "OrchestratorAgent")
+                RuntimeEnvironment = workflowPlan.RuntimeEnvironment,
+            };
+            string concatenatedResults = string.Empty;
+
+            for(int i = startIndex; i < workflowPlan.Steps.Count; ++i)
+            {
+                WorkflowStep step = workflowPlan.Steps[i];
+                workflowExecution.CurrentAgent = step.AgentName;
+                AgentResult agentResponse = new();
+
+                if (step.AgentName == "OrchestratorAgent")
                 {
                     continue;
                 }
 
+                await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
+
                 if (step.AgentName == "RootReviewerAgent")
                 {
-                    result = await _agentClient.ExecuteAsync(step.AgentName, concatenatedResults);
+                    concatenatedResults += $"\n\n User Query: {workflowExecution.UserRequest}";
+                    agentResponse = await _agentClient.ExecuteAsync(step.AgentName, concatenatedResults, []);
                 }
                 else
                 {
-                    result = await _agentClient.ExecuteAsync(step.AgentName, step.Task);
+                    // take out previous history in case of resume
+                    List<ChatMessage> prevMessages = lastOutputSaved == null
+                        ? []
+                        : AIHelpers.ConvertToAgentResult(lastOutputSaved.Steps.First(ele => ele.AgentName == step.AgentName));
+
+                    agentResponse = await _agentClient.ExecuteAsync(step.AgentName, step.Task, prevMessages);
                 }
 
-                results.Steps.Add(new()
-                {
-                    AgentName = step.AgentName,
-                    Output = result
-                });
+                // convert agent response to db compatible
+                AgentOutput agentOutput = AIHelpers.ConvertToAgentOutput(agentResponse, step.AgentName);
 
-                concatenatedResults += $"\n\n According to Agent: {step.AgentName} \n\n task: {step.Task} \n\n result: {result}";
-                await _workflowExecutionRepository.UpdateWorkflowExecutionAgent(executorId, step.AgentName, JsonSerializer.Serialize(results));
+                if (agentResponse.ApprovalRequired) {
+                    agentOutput.Chat[agentOutput.Chat.Count - 1].ApprovalStatus = "Pending";
+                    agentOutput.Chat[agentOutput.Chat.Count - 1].IsApprovalRequired = true;
+                
+                    results.Steps.Add(agentOutput);
+
+                    workflowExecution.AgentOutput = JsonSerializer.Serialize(results);
+                    workflowExecution.Status = "ApprovalRequired";
+                    await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
+                    return;
+                }
+
+                results.Steps.Add(agentOutput);
+                concatenatedResults += $"\n\n According to Agent: {step.AgentName} \n\n task: {step.Task} \n\n result: {agentResponse.Messages.Last().Text}";
+   
+                workflowExecution.AgentOutput = JsonSerializer.Serialize(results);
+                await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
             }
+
+            workflowExecution.Reason = "Workflow executed successfully";
+            workflowExecution.Status = "Completed";
+            await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
         }
         catch (Exception ex)
         {
-            error = true;
-            await _workflowExecutionRepository.UpdateWorkflowExecutionStatus(executorId, "Failed", ex.Message);
-        }
-        finally
-        {
-            if (!error)
-            {
-                await _workflowExecutionRepository.UpdateWorkflowExecutionStatus(executorId, "Completed", "workflow executed successfully");
-            }
+            workflowExecution.Reason = ex.Message;
+            workflowExecution.Status = "Failed";
+            await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
         }
     }
 }

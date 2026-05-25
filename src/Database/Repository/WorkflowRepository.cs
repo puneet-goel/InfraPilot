@@ -3,7 +3,6 @@ using Database.Domain;
 using Database.Entity;
 using Database.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Database.Repository;
 
@@ -22,7 +21,6 @@ public class WorkflowRepository: IWorkflowRepository
         {
             Id = Guid.NewGuid(),
             UserRequest = userRequest,
-            Plan = JsonSerializer.Serialize(new object()),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -35,26 +33,8 @@ public class WorkflowRepository: IWorkflowRepository
 
         return new()
         {
-            Id = workflow.Id,
-            Plan = workflow.Plan
+            Id = workflow.Id
         };
-    }
-
-    public async Task UpdateWorkflowAsync(Guid workflowId, string plan)
-    {
-        WorkflowEntity? entity = await _dbContext
-            .Workflows
-            .FirstOrDefaultAsync(x => x.Id == workflowId);
-
-        if (entity == null)
-        {
-            return;
-        }
-
-        entity.Plan = plan;
-
-        await _dbContext
-            .SaveChangesAsync();
     }
 
     public async Task<GetWorkflow?> GetWorkflowAsync(Guid workflowId)
@@ -66,8 +46,7 @@ public class WorkflowRepository: IWorkflowRepository
         return (entity == null) ? null : new()
         {
             Id = entity.Id,
-            UserRequest = entity.UserRequest,
-            Plan = entity.Plan
+            UserRequest = entity.UserRequest
         };
     }
 
@@ -78,8 +57,7 @@ public class WorkflowRepository: IWorkflowRepository
            .Select(entity => new GetWorkflow()
            {
                Id = entity.Id,
-               UserRequest = entity.UserRequest,
-               Plan = entity.Plan
+               UserRequest = entity.UserRequest
            })
            .ToListAsync();
     }

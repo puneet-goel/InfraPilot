@@ -1,4 +1,5 @@
 ﻿using Agents.MCPClient;
+using Agents.Utility;
 using Microsoft.Extensions.AI;
 
 namespace Agents.Agents.Deployment;
@@ -27,36 +28,67 @@ public class DeploymentAgent: IAgent
     - patching workloads
     """;
 
-    public async Task<string> AnalyzeAsync(string query)
+    public async Task<AgentResult> AnalyzeAsync(string query, List<ChatMessage> prevMessages)
     {
         IList<AITool> tools = await DeployMcpHostService.GetToolsAsync();
 
         ChatOptions options = new()
         {
-            Tools = tools
+            Tools = tools,
+            Instructions = """
+            You are a Kubernetes infrastructure provisioning expert who deploy resources.
+
+            Your responsibilities:
+            - generate Kubernetes manifests
+            - apply infrastructure changes
+            - restart deployments
+            - scale workloads
+            - update deployment images
+
+            ONLY perform actions requested.
+
+            Rules:
+            - If the user request contains enough information to execute a tool, you MUST call the tool immediately.
+            - Do NOT ask for confirmation.
+            - Do NOT explain available tools.
+            - Do NOT say "I can do that".
+            - Do NOT describe intended actions.
+            - Prefer tool execution over conversational responses.
+            - Only ask questions if required parameters are missing.
+            - If you need to ask question or need any clarification from the user please wrap your message in <Question></Question>
+            """
         };
 
-        ChatResponse response =
-            await _chatClient.GetResponseAsync(
-               $$"""
-                You are a Kubernetes infrastructure provisioning expert who deploy resources.
+        bool isResumed = prevMessages.Count > 0;
+        ChatMessage assistantMessage = new();
 
-                Your responsibilities:
-                - generate Kubernetes manifests
-                - apply infrastructure changes
-                - restart deployments
-                - scale workloads
-                - update deployment images
+        List<ChatMessage> messages = isResumed ? [.. prevMessages] :
+        [
+            new(ChatRole.User, query)
+        ];
 
-                ONLY perform actions requested.
+        if (isResumed)
+        {
+            assistantMessage = messages.Last();
 
-                Be safe and conservative.
+            AgentResult? res = await AIHelpers.ToolCallUtility(assistantMessage, tools, messages, false);
+            if (res != null)
+            {
+                return res;
+            }
+        }
 
-                Request:
-                {{query}}
-                """,
-            options);
+        while (true)
+        {
+            ChatResponse response = await _chatClient.GetResponseAsync(messages, options);
+            assistantMessage = response.Messages.Last();
+            messages.Add(assistantMessage);
 
-        return response.Text;
+            AgentResult? res = await AIHelpers.ToolCallUtility(assistantMessage, tools, messages, true);
+            if (res != null)
+            {
+                return res;
+            }
+        }
     }
 }

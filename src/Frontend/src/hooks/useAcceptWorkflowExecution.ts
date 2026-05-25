@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { rerunWorkflow } from '../api/workflowApi'
+import { acceptWorkflowExecution } from '../api/workflowApi'
 
-const useRerunWorkflow = () => {
+const useAcceptWorkflowExecution = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
-		mutationFn: rerunWorkflow,
+		mutationFn: acceptWorkflowExecution,
+
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({
 				queryKey: ['getAllWorkflowExecutions']
@@ -14,4 +15,4 @@ const useRerunWorkflow = () => {
 	})
 }
 
-export { useRerunWorkflow }
+export { useAcceptWorkflowExecution }

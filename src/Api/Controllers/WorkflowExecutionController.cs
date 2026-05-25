@@ -1,4 +1,5 @@
-﻿using Api.Application.Interface;
+﻿using Api.Application.DTO;
+using Api.Application.Interface;
 using Database.Domain;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,5 +28,12 @@ public class WorkflowExecutionController : ControllerBase
     {
         List<GetWorkflowExecution> workflows = await _workflowExecutionService.GetAllWorkflowExecutionStatusAsync();
         return Ok(workflows);
+    }
+
+    [HttpGet("acceptWorkflowExecution")]
+    public async Task<IActionResult> AcceptWorkflowExecution([FromBody] AcceptWorkflowExecution req)
+    {
+        await _workflowExecutionService.AcceptWorkflowExecution(req);
+        return Ok(new object());
     }
 }

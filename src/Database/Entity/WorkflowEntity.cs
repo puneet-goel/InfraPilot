@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Database.Entity;
 
-[Table("workflows")]
+[Table("workflows", Schema = "infrapilot")]
 public class WorkflowEntity
 {
     [Key]
@@ -18,7 +18,4 @@ public class WorkflowEntity
 
     [Column("updated_at")]
     public DateTime UpdatedAt { get; set; }
-
-    [Column("plan_json", TypeName = "jsonb")]
-    public string Plan { get; set; } = "";
 }

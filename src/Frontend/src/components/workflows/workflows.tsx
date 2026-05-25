@@ -8,48 +8,79 @@ import PlanDialogBox from '../gridFormatters/planDialogBox'
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded'
 import ReRunDialogBox from '../gridFormatters/reRunDialogBox'
 import Tooltip from '@mui/material/Tooltip'
+import GavelRoundedIcon from '@mui/icons-material/GavelRounded'
+import ApprovalDialogBox from '../gridFormatters/approvalDialogBox'
+
+const WORKFLOW_STATUSES = [
+	'Pending',
+	'Running',
+	'Completed',
+	'Failed',
+	'ApprovalRequired',
+	'Approved',
+	'Rejected'
+]
 
 const getStatusStyles = (status: string) => {
 	switch (status) {
-		case 'Started':
+		case 'Pending':
+			return {
+				background: 'rgba(245,158,11,0.15)',
+				color: '#fbbf24'
+			}
+
 		case 'Running':
 			return {
-				background: 'rgba(37,99,235,0.15)',
+				background: 'rgba(59,130,246,0.15)',
 				color: '#60a5fa'
 			}
 
 		case 'Completed':
 			return {
-				background: 'rgba(22,163,74,0.15)',
+				background: 'rgba(34,197,94,0.15)',
 				color: '#4ade80'
 			}
 
 		case 'Failed':
 			return {
-				background: 'rgba(220,38,38,0.15)',
+				background: 'rgba(239,68,68,0.15)',
 				color: '#f87171'
 			}
 
-		case 'WaitingApproval':
+		case 'ApprovalRequired':
 			return {
-				background: 'rgba(245,158,11,0.15)',
-				color: '#facc15'
+				background: 'rgba(168,85,247,0.15)',
+				color: '#c084fc'
+			}
+
+		case 'Approved':
+			return {
+				background: 'rgba(16,185,129,0.15)',
+				color: '#34d399'
+			}
+
+		case 'Rejected':
+			return {
+				background: 'rgba(244,63,94,0.15)',
+				color: '#fb7185'
 			}
 
 		default:
 			return {
 				background: 'rgba(255,255,255,0.08)',
-				color: 'white'
+				color: '#e5e7eb'
 			}
 	}
 }
 
 const Workflow = () => {
-	const { data: workflowExecutions = [] } = useGetWorkflowExecutions()
+	const { data: workflowExecutions = [], isLoading } =
+		useGetWorkflowExecutions()
 	const [planDialogOpen, setPlanDialogOpen] = useState(false)
 	const [selectedWorkflow, setSelectedWorkflow] =
 		useState<WorkflowExecution | null>(null)
 	const [rerunDialogOpen, setRerunDialogOpen] = useState(false)
+	const [approvalDialogOpen, setApprovalDialogOpen] = useState(false)
 
 	const columns: GridColDef[] = [
 		{
@@ -89,9 +120,36 @@ const Workflow = () => {
 			flex: 1.2
 		},
 		{
-			field: 'agentOutput',
-			headerName: 'Agent Output',
+			field: 'reason',
+			headerName: 'Reason',
 			flex: 1.3
+		},
+		{
+			field: 'agentOutput',
+			headerName: 'Trace',
+			flex: 0.8,
+			sortable: false,
+			filterable: false,
+			renderCell: (params) => {
+				return (
+					<Tooltip title='Review approvals' arrow>
+						<IconButton
+							onClick={() => {
+								setSelectedWorkflow(params.row)
+								setApprovalDialogOpen(true)
+							}}
+							sx={{
+								color: '#facc15',
+								'&:hover': {
+									background: 'rgba(250,204,21,0.12)'
+								}
+							}}
+						>
+							<GavelRoundedIcon />
+						</IconButton>
+					</Tooltip>
+				)
+			}
 		},
 		{
 			field: 'workflowPlan',
@@ -235,41 +293,19 @@ const Workflow = () => {
 						spacing={1.5}
 						sx={{ flexWrap: 'wrap', justifyContent: 'end' }}
 					>
-						<Chip
-							label='Running'
-							sx={{
-								bgcolor: 'rgba(37,99,235,0.15)',
-								color: '#60a5fa',
-								fontWeight: 700
-							}}
-						/>
-
-						<Chip
-							label='Completed'
-							sx={{
-								bgcolor: 'rgba(22,163,74,0.15)',
-								color: '#4ade80',
-								fontWeight: 700
-							}}
-						/>
-
-						<Chip
-							label='Failed'
-							sx={{
-								bgcolor: 'rgba(220,38,38,0.15)',
-								color: '#f87171',
-								fontWeight: 700
-							}}
-						/>
-
-						<Chip
-							label='Waiting Approval'
-							sx={{
-								bgcolor: 'rgba(245,158,11,0.15)',
-								color: '#facc15',
-								fontWeight: 700
-							}}
-						/>
+						{WORKFLOW_STATUSES.map((status) => {
+							const styles = getStatusStyles(status)
+							return (
+								<Chip
+									label={status}
+									key={status}
+									sx={{
+										...styles,
+										fontWeight: 700
+									}}
+								/>
+							)
+						})}
 					</Stack>
 				</Stack>
 
@@ -289,6 +325,7 @@ const Workflow = () => {
 					<DataGrid
 						rows={workflowExecutions}
 						columns={columns}
+						loading={isLoading}
 						disableRowSelectionOnClick
 						pageSizeOptions={[5, 10, 20]}
 						getRowId={(row) => row.executionId}
@@ -421,6 +458,12 @@ const Workflow = () => {
 				<ReRunDialogBox
 					rerunDialogOpen={rerunDialogOpen}
 					setRerunDialogOpen={setRerunDialogOpen}
+					selectedWorkflow={selectedWorkflow}
+				/>
+
+				<ApprovalDialogBox
+					approvalDialogOpen={approvalDialogOpen}
+					setApprovalDialogOpen={setApprovalDialogOpen}
 					selectedWorkflow={selectedWorkflow}
 				/>
 			</Box>

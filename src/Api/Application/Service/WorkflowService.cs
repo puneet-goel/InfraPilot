@@ -9,10 +9,12 @@ namespace Api.Application.Service;
 public class WorkflowService: IWorkflowService
 {
     private readonly IWorkflowRepository _workflowRepository;
+    private readonly IWorkflowExecutionRepository _workflowExecutionRepository;
 
-    public WorkflowService(IWorkflowRepository workflowRepository)
+    public WorkflowService(IWorkflowRepository workflowRepository, IWorkflowExecutionRepository workflowExecutionRepository)
     {
         _workflowRepository = workflowRepository;
+        _workflowExecutionRepository = workflowExecutionRepository;
     }
 
     public async Task<CreateWorkflow> CreateWorkflowAsync(string userRequest)
@@ -20,7 +22,10 @@ public class WorkflowService: IWorkflowService
         CreateWorkflow workflow = await _workflowRepository
             .InsertWorkflowAsync(userRequest);
 
-        BackgroundJob.Enqueue<IWorkflowEngine>(x => x.ExecuteAsync(workflow.Id));
+        Guid executionId = await _workflowExecutionRepository
+            .InsertWorkflowExecutionAsync(workflow.Id);
+
+        BackgroundJob.Enqueue<IWorkflowEngine>(x => x.ExecuteAsync(executionId));
 
         return workflow;
     }
@@ -35,8 +40,20 @@ public class WorkflowService: IWorkflowService
         return await _workflowRepository.GetAllWorkflowAsync();
     }
 
-    public void RunWorkflow(string workflowId)
+    public async Task<Guid> RunWorkflow(string workflowId)
     {
-        BackgroundJob.Enqueue<IWorkflowEngine>(x => x.ExecuteAsync(Guid.Parse(workflowId)));
+        GetWorkflow? workflow = await _workflowRepository.GetWorkflowAsync(Guid.Parse(workflowId));
+
+        if (workflow == null)
+        {
+            throw new Exception($"No workflow present with given {workflowId}");
+        }
+
+        Guid executionId = await _workflowExecutionRepository
+            .InsertWorkflowExecutionAsync(workflow.Id);
+
+        BackgroundJob.Enqueue<IWorkflowEngine>(x => x.ExecuteAsync(executionId));
+
+        return executionId;
     }
 }

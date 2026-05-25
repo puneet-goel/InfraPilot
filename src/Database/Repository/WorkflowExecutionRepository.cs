@@ -3,7 +3,6 @@ using Database.Entity;
 using Database.Infrastructure.Persistence;
 using Database.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Database.Repository;
 
@@ -17,16 +16,13 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
     }
 
     public async Task<Guid> InsertWorkflowExecutionAsync(Guid workflowId)
-    {
+    {   
         WorkflowExecutionEntity workflowExecution = new()
         {
             Id = Guid.NewGuid(),
             WorkflowId = workflowId,
             UpdatedAt = DateTime.UtcNow,
-            AgentOutput = JsonSerializer.Serialize(new List<string>()),
-            CurrentAgent = "OrchestratorAgent",
-            Status = "Running",
-            Reason = string.Empty
+            Status = "Pending",
         };
 
         await _dbContext.WorkflowExecution.AddAsync(workflowExecution);
@@ -35,38 +31,28 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
         return workflowExecution.Id;
     }
 
-    public async Task UpdateWorkflowExecutionStatus(Guid executionId, string status, string? reason)
+    public async Task UpdateWorkflowExecution(GetWorkflowExecution workflowExecution)
     {
-        WorkflowExecutionEntity entity = await _dbContext.WorkflowExecution.FirstAsync(e => e.Id == executionId);
+        WorkflowExecutionEntity entity = await _dbContext.WorkflowExecution.FirstAsync(e => e.Id == workflowExecution.ExecutionId);
 
-        entity.Status = status;
-        if (reason != null)
-        {
-            entity.Reason = reason;
-        }
+        entity.Status = workflowExecution.Status;
+        entity.Reason = workflowExecution.Reason;
+        entity.CurrentAgent = workflowExecution.CurrentAgent;
+        entity.AgentOutput = workflowExecution.AgentOutput;
+        entity.Plan = workflowExecution.WorkflowPlan;
 
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task UpdateWorkflowExecutionAgent(Guid executionId, string currentAgent, string agentOutput)
+    public async Task<GetWorkflowExecution?> GetWorkflowExecutionAsync(Guid executorId)
     {
-        WorkflowExecutionEntity entity = await _dbContext.WorkflowExecution.FirstAsync(e => e.Id == executionId);
-
-        entity.CurrentAgent = currentAgent;
-        entity.AgentOutput = agentOutput;
-
-        await _dbContext.SaveChangesAsync();
-    }
-
-    public async Task<GetWorkflowExecution?> GetWorkflowExecutionAsync(Guid workflowId)
-    {
-        WorkflowExecutionEntity? entity = await _dbContext.WorkflowExecution.FirstOrDefaultAsync(e => e.Id == workflowId);
+        WorkflowExecutionEntity? entity = await _dbContext.WorkflowExecution.Include(x => x.Workflow).FirstOrDefaultAsync(e => e.Id == executorId);
         return (entity == null) ? null : new()
         {
             ExecutionId = entity.Id,
             WorkflowId = entity.WorkflowId,
             UserRequest = entity.Workflow.UserRequest,
-            WorkflowPlan = entity.Workflow.Plan,
+            WorkflowPlan = entity.Plan,
             CreatedAt = entity.Workflow.CreatedAt,
             UpdatedAt = entity.Workflow.UpdatedAt,
             Status = entity.Status,
@@ -84,12 +70,13 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
                 ExecutionId = entity.Id,
                 WorkflowId = entity.WorkflowId,
                 UserRequest = entity.Workflow.UserRequest,
-                WorkflowPlan = entity.Workflow.Plan,
+                WorkflowPlan = entity.Plan,
                 CreatedAt = entity.Workflow.CreatedAt,
                 UpdatedAt = entity.Workflow.UpdatedAt,
                 Status = entity.Status,
                 CurrentAgent = entity.CurrentAgent,
-                AgentOutput = entity.AgentOutput
+                AgentOutput = entity.AgentOutput,
+                Reason = entity.Reason
             })
             .ToListAsync();
     }

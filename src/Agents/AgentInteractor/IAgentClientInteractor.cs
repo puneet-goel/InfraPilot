@@ -1,6 +1,9 @@
-﻿namespace Agents.AgentInteractor;
+﻿using Agents.Agents;
+using Microsoft.Extensions.AI;
+
+namespace Agents.AgentInteractor;
 
 public interface IAgentClientInteractor
 {
-    Task<string> ExecuteAsync(string agentName, string task);
+    Task<AgentResult> ExecuteAsync(string agentName, string task, List<ChatMessage> messages);
 }

@@ -1,4 +1,5 @@
 ﻿using Agents.MCPClient;
+using Agents.Utility;
 using Microsoft.Extensions.AI;
 
 namespace Agents.Agents.Infrastructure;
@@ -9,7 +10,10 @@ public class InfrastructureAgent: IAgent
 
     public InfrastructureAgent(IChatClient chatClient)
     {
-        _chatClient = chatClient;
+        _chatClient = chatClient
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build(); ;
     }
 
     public string Name => "InfrastructureAgent";
@@ -29,28 +33,53 @@ public class InfrastructureAgent: IAgent
     - secrets
     """;
 
-    public async Task<string> AnalyzeAsync(string query)
+    public async Task<AgentResult> AnalyzeAsync(string query, List<ChatMessage> prevMessages)
     {
         IList<AITool> tools = await InfraMcpHostService.GetToolsAsync();
 
         ChatOptions options = new()
         {
-            Tools = tools
+            Tools = tools,
+            Instructions = """
+            You are an expert Kubernetes SRE engineer.
+
+            Always investigate unhealthy pods thoroughly.
+            Use multiple tools if needed before answering.
+
+            Rules:
+            - If the user request contains enough information to execute a tool, you MUST call the tool immediately.
+            - Do NOT ask for confirmation.
+            - Do NOT explain available tools.
+            - Do NOT say "I can do that".
+            - Do NOT describe intended actions.
+            - Prefer tool execution over conversational responses.
+            - Only ask questions if required parameters are missing.
+            - If you need to ask question or need any clarification from the user please wrap your message in <Question></Question>
+            """
         };
 
-        ChatResponse response =
-            await _chatClient.GetResponseAsync(
-                $""""
-                You are an expert Kubernetes SRE engineer.
+        bool isResumed = prevMessages.Count > 0;
+        List<ChatMessage> messages = isResumed ? [.. prevMessages] :
+        [
+            new(ChatRole.User, query)
+        ];
 
-                Always investigate unhealthy pods thoroughly.
+        if (isResumed)
+        {
+            ChatMessage assistantMessage = messages.Last();
 
-                Use multiple tools if needed before answering.
+            AgentResult? res = await AIHelpers.ToolCallUtility(assistantMessage, tools, messages);
+            if (res != null)
+            {
+                return res;
+            }
+        }
 
-                Query: {query}
-                """",
-                options);
-
-        return response.Text;
+        ChatResponse response = await _chatClient.GetResponseAsync(messages, options);
+        return new()
+        {
+            ApprovalRequired = false,
+            Messages = [.. response.Messages]
+        };
     }
 }

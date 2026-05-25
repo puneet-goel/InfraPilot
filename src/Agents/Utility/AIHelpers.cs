@@ -1,0 +1,143 @@
+﻿using Agents.Agents;
+using Agents.Workflow;
+using Microsoft.Extensions.AI;
+
+namespace Agents.Utility
+{
+    public class AIHelpers
+    {
+        public static async Task<AgentResult?> ToolCallUtility(ChatMessage assistantMessage, IList<AITool> tools, List<ChatMessage> messages, bool approvalToCallTool = false)
+        {
+            // Find tool calls
+            List<FunctionCallContent> toolCalls =
+                [.. assistantMessage.Contents.OfType<FunctionCallContent>()];
+
+            // No tools? Final answer
+            if (toolCalls.Count == 0)
+            {
+                return new AgentResult()
+                {
+                    ApprovalRequired = false,
+                    Messages = [.. messages]
+                };
+            }
+
+            if (approvalToCallTool)
+            {
+                return new AgentResult()
+                {
+                    ApprovalRequired = true,
+                    Messages = [.. messages]
+                };
+            }
+
+            List<AIContent> toolResults = [];
+
+            // Execute all requested tools
+            foreach (FunctionCallContent toolCall in toolCalls)
+            {
+                AITool tool = tools.First(t => t.Name == toolCall.Name);
+                AIFunction function = (AIFunction)tool;
+                object? result = await function.InvokeAsync((AIFunctionArguments)toolCall.Arguments!);
+                toolResults.Add(new FunctionResultContent(toolCall.CallId, result));
+            }
+
+            // Single tool message
+            messages.Add(new ChatMessage(ChatRole.Tool, toolResults));
+
+            return null;
+        }
+
+        public static AgentOutput ConvertToAgentOutput(AgentResult agentResut, string agentName)
+        {
+            AgentOutput agentOutput = new()
+            {
+                AgentName = agentName,
+            };
+
+            foreach (ChatMessage message in agentResut.Messages)
+            {
+                List<ToolCall> tools = [];
+
+                List<FunctionCallContent> toolCalls =
+                    [.. message.Contents.OfType<FunctionCallContent>()];
+                List<FunctionResultContent> executedToolCalls =
+                    [.. message.Contents.OfType<FunctionResultContent>()];
+
+                foreach (FunctionCallContent toolCall in toolCalls)
+                {
+                    tools.Add(new()
+                    {
+                        ToolCallId = toolCall.CallId,
+                        ToolName = toolCall.Name,
+                        Arguments = toolCall.Arguments,
+                    });
+                }
+
+                foreach (FunctionResultContent toolCall in executedToolCalls)
+                {
+                    tools.Add(new()
+                    {
+                        ToolCallId = toolCall.CallId,
+                        Result = toolCall.Result,
+                        Exception = toolCall.Exception,
+                    });
+                }
+
+                agentOutput.Chat.Add(new()
+                {
+                    Role = message.Role.Value,
+                    Text = message.Text,
+                    IsApprovalRequired = false,
+                    ToolCalls = [.. tools]
+                });
+            }
+
+            return agentOutput;
+        }
+        public static List<ChatMessage> ConvertToAgentResult(AgentOutput agentResut)
+        {
+            List<ChatMessage> chats = [];
+            foreach (AgentChatMessage prevChat in agentResut.Chat)
+            {
+                List<AIContent> contents = [];
+
+                // Text
+                if (!string.IsNullOrWhiteSpace(prevChat.Text))
+                {
+                    contents.Add(
+                        new TextContent(prevChat.Text));
+                }
+
+                // Tool calls/results
+                foreach (ToolCall toolCall in prevChat.ToolCalls)
+                {
+                    // Assistant requesting tool
+                    if (prevChat.Role == "assistant")
+                    {
+                        contents.Add(
+                            new FunctionCallContent(
+                                toolCall.ToolCallId,
+                                toolCall.ToolName,
+                                toolCall.Arguments));
+                    }
+
+                    // Tool returning result
+                    if (prevChat.Role == "tool")
+                    {
+                        contents.Add(
+                            new FunctionResultContent(
+                                toolCall.ToolCallId,
+                                toolCall.Result));
+                    }
+                }
+
+                chats.Add(new ChatMessage(
+                    new ChatRole(prevChat.Role),
+                    contents));
+            }
+
+            return chats;
+        }
+    }
+}

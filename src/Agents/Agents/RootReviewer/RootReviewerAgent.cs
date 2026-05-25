@@ -8,7 +8,10 @@ public class RootReviewerAgent: IAgent
 
     public RootReviewerAgent(IChatClient chatClient)
     {
-        _chatClient = chatClient;
+        _chatClient = chatClient
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
     }
 
     public string Name => "RootReviewerAgent";
@@ -24,12 +27,14 @@ public class RootReviewerAgent: IAgent
     - summarizing operational issues
     - confidence-based reasoning
     - incident review and explanation
+    - you dont ask questions from user you just analyse the query/results
     """;
 
-    public async Task<string> AnalyzeAsync(string request)
+    public async Task<AgentResult> AnalyzeAsync(string request, List<ChatMessage> prevMessages)
     {
-        var prompt =
-            $$"""
+        ChatOptions options = new()
+        {
+            Instructions = """
             You are an expert principal Kubernetes Engineer.
 
             Your role is to:
@@ -38,15 +43,18 @@ public class RootReviewerAgent: IAgent
             - explain reasoning
             - estimate confidence
             - summarize incident
+            - you dont ask questions from user you just analyse the query/results
+            """
+        };
 
-            Agent Findings:
-            {{request}}
-            """;
-
-        var response =
+        ChatResponse response =
             await _chatClient
-                .GetResponseAsync(prompt);
+                .GetResponseAsync(request, options);
 
-        return response.Text;
+        return new()
+        {
+            ApprovalRequired = false,
+            Messages = [.. response.Messages]
+        };
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Agents.Agents;
+﻿using Microsoft.Extensions.AI;
+
+namespace Agents.Agents;
 
 public interface IAgent
 {
@@ -8,5 +10,11 @@ public interface IAgent
 
     bool IsWriteAgent { get; }
 
-    Task<string> AnalyzeAsync(string task);
+    Task<AgentResult> AnalyzeAsync(string task, List<ChatMessage> messages);
+}
+
+public class AgentResult
+{
+    public bool ApprovalRequired { get; set; }
+    public List<ChatMessage> Messages { get; set; } = [];
 }

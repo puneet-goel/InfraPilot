@@ -12,7 +12,10 @@ public class OrchestratorAgent
 
     public OrchestratorAgent(IChatClient chatClient, IEnumerable<IAgent> agents)
     {
-        _chatClient = chatClient;
+        _chatClient = chatClient
+            .AsBuilder()
+            .UseFunctionInvocation()
+            .Build();
         _agents = agents;
     }
 
@@ -59,14 +62,16 @@ public class OrchestratorAgent
             {
               "steps": []
             }
-
-            User Request:
-            {{userRequest}}
             """;
+
+        ChatOptions options = new()
+        {
+            Instructions = prompt
+        };
 
         ChatResponse response =
             await _chatClient.GetResponseAsync(
-                prompt);
+                userRequest, options);
 
         string cleaned =
             response.Text

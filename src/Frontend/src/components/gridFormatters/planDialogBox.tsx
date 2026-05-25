@@ -68,7 +68,7 @@ const PlanDialogBox = ({
 				}}
 			>
 				{selectedWorkflow && (
-					<Stack spacing={4}>
+					<Stack spacing={2} sx={{ mt: 2 }}>
 						<Box>
 							<Typography
 								variant='subtitle2'
@@ -100,12 +100,12 @@ const PlanDialogBox = ({
 							</Paper>
 						</Box>
 
-						<Box>
+						<Box sx={{ display: 'flex', alignItems: 'center' }}>
 							<Typography
 								variant='subtitle2'
 								sx={{
 									color: '#94a3b8',
-									mb: 1
+									mr: 1
 								}}
 							>
 								RUNTIME ENVIRONMENT
@@ -113,7 +113,7 @@ const PlanDialogBox = ({
 
 							<Chip
 								label={
-									JSON.parse(selectedWorkflow.workflowPlan)
+									JSON.parse(selectedWorkflow.workflowPlan ?? '{}')
 										.RuntimeEnvironment ?? 'Linux'
 								}
 								sx={{
@@ -136,7 +136,7 @@ const PlanDialogBox = ({
 							</Typography>
 
 							<Stack spacing={2}>
-								{JSON.parse(selectedWorkflow.workflowPlan)?.Steps?.map(
+								{JSON.parse(selectedWorkflow?.workflowPlan ?? '{}')?.Steps?.map(
 									(step: WorkflowStep, index: number) => (
 										<Paper
 											key={index}

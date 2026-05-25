@@ -1,4 +1,5 @@
 ﻿using Agents.Agents;
+using Microsoft.Extensions.AI;
 
 namespace Agents.AgentInteractor;
 
@@ -11,7 +12,7 @@ public class AgentClientInteractor : IAgentClientInteractor
         _agents = agents;
     }
 
-    public async Task<string> ExecuteAsync(string agentName, string task)
+    public async Task<AgentResult> ExecuteAsync(string agentName, string task, List<ChatMessage> messages)
     {
         IAgent? agent = _agents.FirstOrDefault(a => a.Name.Equals(
             agentName,
@@ -21,6 +22,6 @@ public class AgentClientInteractor : IAgentClientInteractor
             ? throw new Exception(
                 $"Unknown agent: {agentName}")
             : await agent
-            .AnalyzeAsync(task);
+            .AnalyzeAsync(task, messages);
     }
 }

@@ -37,9 +37,9 @@ public class WorkflowController : ControllerBase
     }
 
     [HttpPost("run")]
-    public IActionResult RunWorkflow([FromBody] string workflowId)
+    public async Task<IActionResult> RunWorkflow([FromBody] string workflowId)
     {
-        _workflowService.RunWorkflow(workflowId);
+        await _workflowService.RunWorkflow(workflowId);
         return Ok(new object());
     }
 }

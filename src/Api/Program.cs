@@ -2,9 +2,11 @@ using Agents.RegisterServices;
 using Api.Application.Interface;
 using Api.Application.Service;
 using Database;
+using Database.Infrastructure.Persistence;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
@@ -35,10 +37,7 @@ builder.Services.AddSingleton<IChatClient>(sp =>
             Endpoint = new Uri(url)
         });
 
-    return client.GetChatClient(model).AsIChatClient()
-        .AsBuilder()
-        .UseFunctionInvocation()
-        .Build();
+    return client.GetChatClient(model).AsIChatClient();
 });
 
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
@@ -55,6 +54,24 @@ builder.Services.AddHangfire(config =>
 builder.Services.AddHangfireServer();
 
 WebApplication app = builder.Build();
+
+// migrations command
+// dotnet ef migrations add InitialCreate --project .\Database\ --startup-project .\Api\ -o .\Infrastructure\Migrations
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    IServiceProvider services = scope.ServiceProvider;
+    ILogger<Program> logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        AppDbContext db = services.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        logger.LogInformation("Migration complete");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Migration failed");
+    }
+}
 
 // Rewrite /api/workflow -> /workflow
 var rewriteOptions = new RewriteOptions()
