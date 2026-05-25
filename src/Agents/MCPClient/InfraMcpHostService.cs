@@ -16,9 +16,7 @@ public class InfraMcpHostService
 
                 Arguments =
                 [
-                    "run",
-                    "--project",
-                    "../Servers/InfrastructureMCP"
+                    "/app/mcp/infrastructure/InfrastructureMCP.dll"
                 ]
             });
 

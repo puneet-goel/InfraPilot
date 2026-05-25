@@ -16,9 +16,7 @@ public class DeployMcpHostService
 
                 Arguments =
                 [
-                    "run",
-                    "--project",
-                    "../Servers/DeploymentMCP"
+                    "/app/mcp/deployment/DeploymentMCP.dll"
                 ]
             });
 
