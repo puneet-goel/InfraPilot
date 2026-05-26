@@ -7,14 +7,22 @@ public class DeployMcpHostService
 {
     public static async Task<IList<AITool>> GetToolsAsync()
     {
+        string environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")!;
+        bool isDevelopment = environment == "Development";
+
         StdioClientTransport transport =
             new (new()
             {
                 Name = "Deploy Resources on Kubernetes MCP Server",
-
                 Command = "dotnet",
-
-                Arguments =
+                Arguments = isDevelopment
+                ?
+                [
+                    "run",
+                    "--project",
+                    "../Servers/DeploymentMCP"
+                ]
+                :
                 [
                     "/app/mcp/deployment/DeploymentMCP.dll"
                 ]

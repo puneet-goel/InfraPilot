@@ -18,6 +18,16 @@ RUN apt-get update && apt-get install -y curl
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 RUN apt-get install -y nodejs
 
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Install Docker CLI
+RUN apt-get update && apt-get install -y docker.io
+
+# Install Podman
+RUN apt-get update && apt-get install -y podman
+
 WORKDIR /src
 
 # Copy csproj files first for docker layer caching
@@ -63,4 +73,7 @@ RUN dotnet publish "./InfrastructureMCP.csproj" -c $BUILD_CONFIGURATION -o /app/
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=build /usr/local/bin/kubectl /usr/local/bin/kubectl
+COPY --from=build /usr/bin/docker /usr/bin/docker
+COPY --from=build /usr/bin/podman /usr/bin/podman
 ENTRYPOINT ["dotnet", "Api.dll"]
