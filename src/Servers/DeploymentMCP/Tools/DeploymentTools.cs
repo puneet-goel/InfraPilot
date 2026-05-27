@@ -14,38 +14,34 @@ public class DeploymentTools
 
     public DeploymentTools()
     {
-        string? host = Environment.GetEnvironmentVariable("KUBE_HOST");
-        string? token = Environment.GetEnvironmentVariable("KUBE_TOKEN");
-        //string? caCertContent = Environment.GetEnvironmentVariable("KUBE_CA_CERT");
+        string? host =
+            Environment.GetEnvironmentVariable("KUBE_HOST");
+
+        string? token =
+            Environment.GetEnvironmentVariable("KUBE_TOKEN");
 
         if (string.IsNullOrWhiteSpace(host))
         {
-            throw new Exception("KUBE_HOST environment variable is missing.");
+            throw new Exception(
+                "KUBE_HOST environment variable is missing.");
         }
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            throw new Exception("KUBE_TOKEN environment variable is missing.");
+            throw new Exception(
+                "KUBE_TOKEN environment variable is missing.");
         }
-
-        //if (string.IsNullOrWhiteSpace(caCertContent))
-        //{
-        //    throw new Exception("KUBE_CA_CERT environment variable is missing.");
-        //}
-
-        //byte[] certBytes = Encoding.UTF8.GetBytes(caCertContent);
-        //X509Certificate2 caCert = X509Certificate2.CreateFromPem(Encoding.UTF8.GetString(certBytes));
 
         KubernetesClientConfiguration config = new()
         {
             Host = host,
             AccessToken = token,
-            SkipTlsVerify = true,
-            //SslCaCerts = new X509Certificate2Collection(caCert)
+            SkipTlsVerify = true
         };
 
-        _client = new(config);
-        _options = new()
+        _client = new Kubernetes(config);
+
+        _options = new JsonSerializerOptions
         {
             WriteIndented = true
         };
@@ -55,9 +51,13 @@ public class DeploymentTools
     [Description("Create Kubernetes deployment")]
     public async Task<string> CreateDeployment(
         [Description("Deployment name")] string name,
+
         [Description("Container image")] string image,
+
         [Description("Replica count")] int replicas,
+
         [Description("Container port")] int port,
+
         [Description("Namespace")] string ns = "default")
     {
         V1Deployment deployment = new()
@@ -101,7 +101,7 @@ public class DeploymentTools
                                 Image = image,
                                 Ports =
                                 [
-                                    new V1ContainerPort()
+                                    new V1ContainerPort
                                     {
                                         ContainerPort = port
                                     }
@@ -118,7 +118,17 @@ public class DeploymentTools
                 deployment,
                 ns);
 
-        return JsonSerializer.Serialize(result, _options);
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Deployment created successfully",
+                result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                result.Spec.Replicas,
+                result.Status?.AvailableReplicas,
+                Image = image
+            },
+            _options);
     }
 
     [McpServerTool]
@@ -136,17 +146,28 @@ public class DeploymentTools
             }
         };
 
-        V1Namespace result = await _client.CoreV1.CreateNamespaceAsync(ns);
+        V1Namespace result =
+            await _client.CoreV1.CreateNamespaceAsync(ns);
 
-        return JsonSerializer.Serialize(result, _options);
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Namespace created successfully",
+                result.Metadata.Name,
+                Status = result.Status?.Phase
+            },
+            _options);
     }
 
     [McpServerTool]
     [Description("Create Kubernetes pod")]
     public async Task<string> CreatePod(
         [Description("Pod name")] string name,
+
         [Description("Container image")] string image,
+
         [Description("Container port")] int port,
+
         [Description("Namespace")] string ns = "default")
     {
         V1Pod pod = new()
@@ -179,18 +200,38 @@ public class DeploymentTools
             }
         };
 
-        V1Pod result = await _client.CoreV1.CreateNamespacedPodAsync(pod, ns);
-        return JsonSerializer.Serialize(result, _options);
+        V1Pod result =
+            await _client.CoreV1.CreateNamespacedPodAsync(
+                pod,
+                ns);
+
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Pod created successfully",
+                result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                result.Status?.Phase,
+                result.Status?.PodIP,
+                Node = result.Spec?.NodeName,
+                Image = image
+            },
+            _options);
     }
 
     [McpServerTool]
     [Description("Create Kubernetes service")]
     public async Task<string> CreateService(
         [Description("Service name")] string name,
+
         [Description("Service type")] string type,
+
         [Description("Port")] int port,
+
         [Description("Target port")] int targetPort,
+
         [Description("Selector app label")] string selector,
+
         [Description("Namespace")] string ns = "default")
     {
         V1Service service = new()
@@ -221,21 +262,45 @@ public class DeploymentTools
             }
         };
 
-        V1Service result = await _client.CoreV1.CreateNamespacedServiceAsync(service, ns);
+        V1Service result =
+            await _client.CoreV1.CreateNamespacedServiceAsync(
+                service,
+                ns);
 
-        return JsonSerializer.Serialize(result, _options);
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Service created successfully",
+                result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                result.Spec.Type,
+                result.Spec.ClusterIP,
+                Ports = result.Spec.Ports.Select(p => new
+                {
+                    p.Port,
+                    p.TargetPort
+                })
+            },
+            _options);
     }
 
     [McpServerTool]
     [Description("Restart deployment rollout")]
     public async Task<string> RestartDeployment(
         [Description("Deployment name")] string deploymentName,
+
         [Description("Namespace")] string ns = "default")
     {
-        V1Deployment deployment = await _client.AppsV1.ReadNamespacedDeploymentAsync(deploymentName, ns);
+        V1Deployment deployment =
+            await _client.AppsV1.ReadNamespacedDeploymentAsync(
+                deploymentName,
+                ns);
 
-        deployment.Spec.Template.Metadata ??= new V1ObjectMeta();
-        deployment.Spec.Template.Metadata.Annotations ??= new Dictionary<string, string>();
+        deployment.Spec.Template.Metadata ??=
+            new V1ObjectMeta();
+
+        deployment.Spec.Template.Metadata.Annotations ??=
+            new Dictionary<string, string>();
 
         deployment.Spec.Template.Metadata.Annotations[
             "kubectl.kubernetes.io/restartedAt"
@@ -247,14 +312,25 @@ public class DeploymentTools
                 deploymentName,
                 ns);
 
-        return JsonSerializer.Serialize(result, _options);
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Deployment restarted successfully",
+                result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                result.Spec.Replicas,
+                result.Status?.UpdatedReplicas
+            },
+            _options);
     }
 
     [McpServerTool]
     [Description("Scale deployment replicas")]
     public async Task<string> ScaleDeployment(
         [Description("Deployment name")] string deploymentName,
+
         [Description("Replica count")] int replicas,
+
         [Description("Namespace")] string ns = "default")
     {
         V1Deployment deployment =
@@ -270,15 +346,28 @@ public class DeploymentTools
                 deploymentName,
                 ns);
 
-        return JsonSerializer.Serialize(result, _options);
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Deployment scaled successfully",
+                result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                DesiredReplicas = result.Spec.Replicas,
+                result.Status?.ReadyReplicas,
+                result.Status?.AvailableReplicas
+            },
+            _options);
     }
 
     [McpServerTool]
     [Description("Patch deployment image")]
     public async Task<string> UpdateDeploymentImage(
         [Description("Deployment name")] string deploymentName,
+
         [Description("Container name")] string containerName,
+
         [Description("New image")] string image,
+
         [Description("Namespace")] string ns = "default")
     {
         V1Deployment deployment =
@@ -297,12 +386,23 @@ public class DeploymentTools
         }
 
         container.Image = image;
+
         V1Deployment result =
             await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
                 deployment,
                 deploymentName,
                 ns);
 
-        return JsonSerializer.Serialize(result, _options);
+        return JsonSerializer.Serialize(
+            new
+            {
+                Message = "Deployment image updated successfully",
+                Deployment = result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                Container = containerName,
+                NewImage = image,
+                result.Status?.UpdatedReplicas
+            },
+            _options);
     }
 }

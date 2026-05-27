@@ -320,44 +320,46 @@ const ApprovalDialogBox = ({
 																								/>
 																							</Stack>
 
-																							{/* ARGUMENTS */}
-
-																							<Box>
-																								<Typography
-																									sx={{
-																										color: '#94a3b8',
-																										mb: 1,
-																										fontSize: '0.85rem'
-																									}}
-																								>
-																									Arguments
-																								</Typography>
-
-																								<Paper
-																									elevation={0}
-																									sx={{
-																										p: 2,
-																										borderRadius: 2,
-																										background: '#020617',
-																										overflow: 'auto'
-																									}}
-																								>
-																									<pre
-																										style={{
-																											margin: 0,
-																											color: '#cbd5e1',
-																											fontSize: '0.82rem',
-																											lineHeight: 1.7
+																							{tool.Arguments ? (
+																								<Box>
+																									<Typography
+																										sx={{
+																											color: '#94a3b8',
+																											mb: 1,
+																											fontSize: '0.85rem'
 																										}}
 																									>
-																										{JSON.stringify(
-																											tool.Arguments,
-																											null,
-																											2
-																										)}
-																									</pre>
-																								</Paper>
-																							</Box>
+																										Arguments
+																									</Typography>
+
+																									<Paper
+																										elevation={0}
+																										sx={{
+																											p: 2,
+																											borderRadius: 2,
+																											background: '#020617',
+																											overflow: 'auto'
+																										}}
+																									>
+																										<pre
+																											style={{
+																												margin: 0,
+																												color: '#cbd5e1',
+																												fontSize: '0.82rem',
+																												lineHeight: 1.7
+																											}}
+																										>
+																											{JSON.stringify(
+																												tool.Arguments,
+																												null,
+																												2
+																											)}
+																										</pre>
+																									</Paper>
+																								</Box>
+																							) : (
+																								<Box></Box>
+																							)}
 
 																							{tool.Result ? (
 																								<Box>
@@ -532,8 +534,8 @@ const ApprovalDialogBox = ({
 						borderRadius: 3,
 						textTransform: 'none',
 						px: 3,
-						background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-						boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
+						background: 'linear-gradient(135deg, #eb2525 0%, #d81d1d 100%)',
+						boxShadow: '0 10px 30px rgb(235 37 37 / 35%)'
 					}}
 				>
 					Reject

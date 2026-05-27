@@ -45,7 +45,7 @@ public class WorkflowEngine: IWorkflowEngine
             }
 
             // workflow started
-            workflowExecution.CurrentAgent = "OrchestratorAgent";
+            workflowExecution.CurrentAgent = workflowExecution.CurrentAgent ?? "OrchestratorAgent";
             workflowExecution.Status = "Running";
             await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
 
@@ -67,7 +67,7 @@ public class WorkflowEngine: IWorkflowEngine
 
                 if(startIndex == -1)
                 {
-                    startIndex = 0;
+                    startIndex = workflowPlan.Steps.Count;
                 }
             }
             else

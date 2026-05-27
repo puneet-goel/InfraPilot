@@ -30,7 +30,7 @@ public class WorkflowExecutionController : ControllerBase
         return Ok(workflows);
     }
 
-    [HttpGet("acceptWorkflowExecution")]
+    [HttpPost("acceptWorkflowExecution")]
     public async Task<IActionResult> AcceptWorkflowExecution([FromBody] AcceptWorkflowExecution req)
     {
         await _workflowExecutionService.AcceptWorkflowExecution(req);
