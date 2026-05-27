@@ -1,6 +1,7 @@
 import type {
 	AcceptWorkflowexecutionRequest,
-	WorkflowExecution
+	WorkflowExecution,
+	ReRunWorkflowRequest
 } from '../models/models'
 import { api } from './client'
 
@@ -15,10 +16,10 @@ export const createWorkflow = async (prompt: string) => {
 	})
 }
 
-export const rerunWorkflow = async (workflowId: string) => {
+export const rerunWorkflow = async (req: ReRunWorkflowRequest) => {
 	return api(`/workflow/run`, {
 		method: 'POST',
-		body: JSON.stringify(workflowId)
+		body: JSON.stringify(req)
 	})
 }
 export const acceptWorkflowExecution = async (

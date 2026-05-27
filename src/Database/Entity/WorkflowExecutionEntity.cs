@@ -27,9 +27,11 @@ public class WorkflowExecutionEntity
 
     [Column("agent_output", TypeName = "jsonb")]
     public string? AgentOutput { get; set; }
+    [Column("created_at")]
+    public DateTime? CreatedAt { get; set; }
 
     [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     [ForeignKey(nameof(WorkflowId))]
     public WorkflowEntity Workflow { get; set; } = null!;

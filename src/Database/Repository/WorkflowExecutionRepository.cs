@@ -21,6 +21,7 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
         {
             Id = Guid.NewGuid(),
             WorkflowId = workflowId,
+            CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             Status = "Pending",
         };
@@ -40,6 +41,7 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
         entity.CurrentAgent = workflowExecution.CurrentAgent;
         entity.AgentOutput = workflowExecution.AgentOutput;
         entity.Plan = workflowExecution.WorkflowPlan;
+        entity.UpdatedAt = DateTime.UtcNow;
 
         await _dbContext.SaveChangesAsync();
     }
@@ -53,8 +55,8 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
             WorkflowId = entity.WorkflowId,
             UserRequest = entity.Workflow.UserRequest,
             WorkflowPlan = entity.Plan,
-            CreatedAt = entity.Workflow.CreatedAt,
-            UpdatedAt = entity.Workflow.UpdatedAt,
+            CreatedAt = entity.CreatedAt,
+            UpdatedAt = entity.UpdatedAt,
             Status = entity.Status,
             Reason = entity.Reason,
             CurrentAgent = entity.CurrentAgent,
@@ -71,8 +73,8 @@ public class WorkflowExecutionRepository: IWorkflowExecutionRepository
                 WorkflowId = entity.WorkflowId,
                 UserRequest = entity.Workflow.UserRequest,
                 WorkflowPlan = entity.Plan,
-                CreatedAt = entity.Workflow.CreatedAt,
-                UpdatedAt = entity.Workflow.UpdatedAt,
+                CreatedAt = entity.CreatedAt,
+                UpdatedAt = entity.UpdatedAt,
                 Status = entity.Status,
                 CurrentAgent = entity.CurrentAgent,
                 AgentOutput = entity.AgentOutput,

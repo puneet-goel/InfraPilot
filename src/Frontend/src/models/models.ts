@@ -51,3 +51,9 @@ export type AcceptWorkflowexecutionRequest = {
 	accept: boolean
 	reason: string
 }
+
+export type ReRunWorkflowRequest = {
+	workflowId: string
+	executionId: string
+	useSamePlan: boolean
+}

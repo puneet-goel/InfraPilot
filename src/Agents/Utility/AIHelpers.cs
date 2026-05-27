@@ -38,7 +38,7 @@ namespace Agents.Utility
             {
                 AITool tool = tools.First(t => t.Name == toolCall.Name);
                 AIFunction function = (AIFunction)tool;
-                object? result = await function.InvokeAsync((AIFunctionArguments)toolCall.Arguments!);
+                object? result = await function.InvokeAsync(new AIFunctionArguments(toolCall.Arguments));
                 toolResults.Add(new FunctionResultContent(toolCall.CallId, result));
             }
 

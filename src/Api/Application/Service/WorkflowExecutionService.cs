@@ -43,8 +43,7 @@ public class WorkflowExecutionService : IWorkflowExecutionService
 
         lastAgentChatMessage.ApprovalStatus = req.Accept ? "Approved" : "Rejected";
         lastAgentChatMessage.ApprovalReason = req.Reason;
-        lastOutputSaved.Steps[lastOutputSaved.Steps.Count - 1].Chat[lastAgentOutput.Chat.Count - 1] = lastAgentChatMessage;
-        workflowExecution.AgentOutput = JsonSerializer.Serialize(lastAgentOutput);
+        workflowExecution.AgentOutput = JsonSerializer.Serialize(lastOutputSaved);
         workflowExecution.Status = req.Accept ? "Approved" : "Rejected";
 
         await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);

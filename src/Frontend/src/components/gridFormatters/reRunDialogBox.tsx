@@ -27,18 +27,49 @@ const ReRunDialogBox = ({
 
 	const handleSubmit = async () => {
 		try {
-			await rerunWorkflow.mutateAsync(selectedWorkflow.workflowId)
-			enqueueSnackbar('Workflow created successfully!', {
+			await rerunWorkflow.mutateAsync({
+				workflowId: selectedWorkflow.workflowId,
+				executionId: selectedWorkflow.executionId,
+				useSamePlan: false
+			})
+			enqueueSnackbar('New workflow created successfully!', {
 				variant: 'success',
 				anchorOrigin: {
 					vertical: 'top',
 					horizontal: 'right'
 				}
 			})
-      setRerunDialogOpen(false)
-		} catch (err){
-      console.error('Error while re-running workflow:', err)
+			setRerunDialogOpen(false)
+		} catch (err) {
+			console.error('Error while re-running workflow:', err)
 			enqueueSnackbar('Error while submitting workflow', {
+				variant: 'error',
+				anchorOrigin: {
+					vertical: 'top',
+					horizontal: 'right'
+				}
+			})
+		}
+	}
+
+	const handleReRun = async () => {
+		try {
+			await rerunWorkflow.mutateAsync({
+				workflowId: selectedWorkflow.workflowId,
+				executionId: selectedWorkflow.executionId,
+				useSamePlan: true
+			})
+			enqueueSnackbar('Workflow re-run successfully!', {
+				variant: 'success',
+				anchorOrigin: {
+					vertical: 'top',
+					horizontal: 'right'
+				}
+			})
+			setRerunDialogOpen(false)
+		} catch (err) {
+			console.error('Error while re-running workflow:', err)
+			enqueueSnackbar('Error while re-running workflow', {
 				variant: 'error',
 				anchorOrigin: {
 					vertical: 'top',
@@ -83,7 +114,7 @@ const ReRunDialogBox = ({
 							color: 'rgba(255,255,255,0.65)'
 						}}
 					>
-						Generate a fresh plan using the same user request.
+						Run the workflow using the same user request.
 					</Typography>
 				</Stack>
 			</DialogTitle>
@@ -102,7 +133,7 @@ const ReRunDialogBox = ({
 						color: '#bfdbfe'
 					}}
 				>
-					Do you want to rerun this workflow with a new orchestration plan?
+					Do you want to rerun this workflow?
 				</Typography>
 			</DialogContent>
 
@@ -130,6 +161,21 @@ const ReRunDialogBox = ({
 				<Button
 					variant='contained'
 					startIcon={<ReplayRoundedIcon />}
+					onClick={handleReRun}
+					sx={{
+						borderRadius: 3,
+						textTransform: 'none',
+						px: 3,
+						background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+						boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
+					}}
+				>
+					Yes
+				</Button>
+
+				<Button
+					variant='contained'
+					startIcon={<ReplayRoundedIcon />}
 					onClick={handleSubmit}
 					sx={{
 						borderRadius: 3,
@@ -139,7 +185,7 @@ const ReRunDialogBox = ({
 						boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
 					}}
 				>
-					Yes, Re-Run
+					Yes, but with diifferent plan
 				</Button>
 			</DialogActions>
 		</Dialog>

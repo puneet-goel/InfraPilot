@@ -2,7 +2,7 @@
 
 public class AcceptWorkflowExecution
 {
-    public bool Accept { get; set; }
-    public string ExecutionId { get; set; } = "";
+    public bool Accept { get; set; } = true;
+    public required string ExecutionId { get; set; }
     public string Reason { get; set; } = "";
 }

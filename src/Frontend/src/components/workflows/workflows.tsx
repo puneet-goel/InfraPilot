@@ -92,12 +92,12 @@ const Workflow = () => {
 		{
 			field: 'userRequest',
 			headerName: 'User Request',
-			flex: 2.5
+			flex: 1.5
 		},
 		{
 			field: 'status',
 			headerName: 'Status',
-			flex: 1,
+			width: 150,
 			renderCell: (params) => {
 				const styles = getStatusStyles(params.value)
 				return (
@@ -117,17 +117,57 @@ const Workflow = () => {
 		{
 			field: 'currentAgent',
 			headerName: 'Current Agent',
-			flex: 1.2
+			width: 150,
 		},
 		{
 			field: 'reason',
 			headerName: 'Reason',
-			flex: 1.3
+			flex: 1
 		},
 		{
+			field: 'createdAt',
+			headerName: 'Created At',
+			type: 'dateTime',
+			width: 180,
+			valueGetter: (value) => value && new Date(value),
+			valueFormatter: (value) => {
+				if (!value) {
+					return ''
+				}
+
+				return new Intl.DateTimeFormat('en-IN', {
+					day: '2-digit',
+					month: 'short',
+					year: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}).format(value)
+			}
+		},
+		{
+			field: 'updatedAt',
+			headerName: 'Updated At',
+			type: 'dateTime',
+			width: 180,
+			valueGetter: (value) => value && new Date(value),
+			valueFormatter: (value) => {
+				if (!value) {
+					return ''
+				}
+
+				return new Intl.DateTimeFormat('en-IN', {
+					day: '2-digit',
+					month: 'short',
+					year: 'numeric',
+					hour: '2-digit',
+					minute: '2-digit'
+				}).format(value)
+			}
+		},
+				{
 			field: 'agentOutput',
 			headerName: 'Trace',
-			flex: 0.8,
+			width: 70,
 			sortable: false,
 			filterable: false,
 			renderCell: (params) => {
@@ -154,7 +194,7 @@ const Workflow = () => {
 		{
 			field: 'workflowPlan',
 			headerName: 'Plan',
-			flex: 0.8,
+			width: 65,
 			sortable: false,
 			renderCell: (params) => {
 				return (
@@ -178,49 +218,9 @@ const Workflow = () => {
 			}
 		},
 		{
-			field: 'createdAt',
-			headerName: 'Created At',
-			type: 'dateTime',
-			flex: 1.2,
-			valueGetter: (value) => value && new Date(value),
-			valueFormatter: (value) => {
-				if (!value) {
-					return ''
-				}
-
-				return new Intl.DateTimeFormat('en-IN', {
-					day: '2-digit',
-					month: 'short',
-					year: 'numeric',
-					hour: '2-digit',
-					minute: '2-digit'
-				}).format(value)
-			}
-		},
-		{
-			field: 'updatedAt',
-			headerName: 'Updated At',
-			type: 'dateTime',
-			flex: 1.2,
-			valueGetter: (value) => value && new Date(value),
-			valueFormatter: (value) => {
-				if (!value) {
-					return ''
-				}
-
-				return new Intl.DateTimeFormat('en-IN', {
-					day: '2-digit',
-					month: 'short',
-					year: 'numeric',
-					hour: '2-digit',
-					minute: '2-digit'
-				}).format(value)
-			}
-		},
-		{
 			field: 'actions',
 			headerName: 'Actions',
-			flex: 1,
+			width: 100,
 			sortable: false,
 			filterable: false,
 			renderCell: (params) => {
@@ -338,6 +338,9 @@ const Workflow = () => {
 								paginationModel: {
 									pageSize: 10
 								}
+							},
+							sorting: {
+								sortModel: [{ field: 'updatedAt', sort: 'desc' }]
 							}
 						}}
 						sx={{

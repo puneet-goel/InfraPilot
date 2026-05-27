@@ -11,20 +11,17 @@ using System.Text.Json;
 
 namespace Agents.Engine;
 
-public class WorkflowEngine: IWorkflowEngine
+public class WorkflowEngine(
+    IAgentClientInteractor agentClient,
+    IEnumerable<IAgent> agents,
+    IWorkflowExecutionRepository workflowExecutionRepository,
+    OrchestratorAgent orchestratorAgent
+) : IWorkflowEngine
 {
-    private readonly IAgentClientInteractor _agentClient;
-    private readonly IEnumerable<IAgent> _agents;
-    private readonly OrchestratorAgent _orchestratorAgent;
-    private readonly IWorkflowExecutionRepository _workflowExecutionRepository;
-
-    public WorkflowEngine(IAgentClientInteractor agentClient, IEnumerable<IAgent> agents, IWorkflowExecutionRepository workflowExecutionRepository, OrchestratorAgent orchestratorAgent)
-    {
-        _agentClient = agentClient;
-        _agents = agents;
-        _workflowExecutionRepository = workflowExecutionRepository;
-        _orchestratorAgent = orchestratorAgent;
-    }
+    private readonly IAgentClientInteractor _agentClient = agentClient;
+    private readonly IEnumerable<IAgent> _agents = agents;
+    private readonly OrchestratorAgent _orchestratorAgent = orchestratorAgent;
+    private readonly IWorkflowExecutionRepository _workflowExecutionRepository = workflowExecutionRepository;
 
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid executorId)
@@ -38,14 +35,15 @@ public class WorkflowEngine: IWorkflowEngine
 
         try
         {
-            List<string> codesToStopExecution = ["Rejected", "Failed", "ApprovalRequired"];
-            if (codesToStopExecution.Contains(workflowExecution.Status))
+            // not adding Failed scenario if someone wants to re-run
+            List<string> codesToStopExecution = ["Rejected", "ApprovalRequired"];
+            if (codesToStopExecution.Contains(workflowExecution.Status!))
             {
-                return;
+               return;
             }
 
             // workflow started
-            workflowExecution.CurrentAgent = workflowExecution.CurrentAgent ?? "OrchestratorAgent";
+            workflowExecution.CurrentAgent ??= "OrchestratorAgent";
             workflowExecution.Status = "Running";
             await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
 
@@ -62,7 +60,7 @@ public class WorkflowEngine: IWorkflowEngine
             // resume state Human in the loop
             if (lastOutputSaved != null)
             {
-                workflowPlan = JsonSerializer.Deserialize<WorkflowPlan>(workflowExecution.WorkflowPlan) ?? new();
+                workflowPlan = JsonSerializer.Deserialize<WorkflowPlan>(workflowExecution.WorkflowPlan!) ?? new();
                 startIndex = workflowPlan.Steps.FindIndex(ele => ele.AgentName == workflowExecution.CurrentAgent);
 
                 if(startIndex == -1)
@@ -139,8 +137,8 @@ public class WorkflowEngine: IWorkflowEngine
                 AgentOutput agentOutput = AIHelpers.ConvertToAgentOutput(agentResponse, step.AgentName);
 
                 if (agentResponse.ApprovalRequired) {
-                    agentOutput.Chat[agentOutput.Chat.Count - 1].ApprovalStatus = "Pending";
-                    agentOutput.Chat[agentOutput.Chat.Count - 1].IsApprovalRequired = true;
+                    agentOutput.Chat[^1].ApprovalStatus = "Pending";
+                    agentOutput.Chat[^1].IsApprovalRequired = true;
                 
                     results.Steps.Add(agentOutput);
 

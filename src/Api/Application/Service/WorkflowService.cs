@@ -1,4 +1,5 @@
 ﻿using Agents.Engine;
+using Api.Application.DTO;
 using Api.Application.Interface;
 using Database.Domain;
 using Database.Repository.Interfaces;
@@ -40,20 +41,23 @@ public class WorkflowService: IWorkflowService
         return await _workflowRepository.GetAllWorkflowAsync();
     }
 
-    public async Task<Guid> RunWorkflow(string workflowId)
+    public async Task<Guid> RunWorkflow(ReRunWorkflow req)
     {
-        GetWorkflow? workflow = await _workflowRepository.GetWorkflowAsync(Guid.Parse(workflowId));
-
-        if (workflow == null)
+        Guid executionId = Guid.Parse(req.ExecutionId);
+        if (!req.UseSamePlan)
         {
-            throw new Exception($"No workflow present with given {workflowId}");
+            GetWorkflow? workflow = await _workflowRepository.GetWorkflowAsync(Guid.Parse(req.WorkflowId));
+
+            if (workflow == null)
+            {
+                throw new Exception($"No workflow present with given {req.WorkflowId}");
+            }
+
+            executionId = await _workflowExecutionRepository
+                .InsertWorkflowExecutionAsync(workflow.Id);
         }
 
-        Guid executionId = await _workflowExecutionRepository
-            .InsertWorkflowExecutionAsync(workflow.Id);
-
         BackgroundJob.Enqueue<IWorkflowEngine>(x => x.ExecuteAsync(executionId));
-
         return executionId;
     }
 }

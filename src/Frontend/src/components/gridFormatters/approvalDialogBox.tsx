@@ -150,7 +150,7 @@ const ApprovalDialogBox = ({
 										key={agentIndex}
 										elevation={0}
 										sx={{
-											p: 3,
+											p: 1.5,
 											borderRadius: 5,
 											background: 'rgba(255,255,255,0.03)',
 											border: '1px solid rgba(255,255,255,0.06)'
@@ -195,18 +195,19 @@ const ApprovalDialogBox = ({
 
 											<Divider
 												sx={{
-													borderColor: 'rgba(255,255,255,0.06)'
+													borderColor: 'rgba(255,255,255,0.06)',
+													mt: 1.5
 												}}
 											/>
 
-											<Stack spacing={3}>
+											<Stack spacing={3} sx={{ mt: 1.5 }}>
 												{agent?.Chat?.map(
 													(message: AgentChatMessage, messageIndex: number) => (
 														<Box key={messageIndex}>
 															<Paper
 																elevation={0}
 																sx={{
-																	p: 3,
+																	p: 1.5,
 																	borderRadius: 4,
 																	background: 'rgba(15,23,42,0.7)',
 																	border: '1px solid rgba(255,255,255,0.05)'

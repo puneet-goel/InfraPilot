@@ -1,4 +1,5 @@
-﻿using Api.Application.Interface;
+﻿using Api.Application.DTO;
+using Api.Application.Interface;
 using Database.Domain;
 using Microsoft.AspNetCore.Mvc;
 
@@ -37,9 +38,9 @@ public class WorkflowController : ControllerBase
     }
 
     [HttpPost("run")]
-    public async Task<IActionResult> RunWorkflow([FromBody] string workflowId)
+    public async Task<IActionResult> RunWorkflow([FromBody] ReRunWorkflow req)
     {
-        await _workflowService.RunWorkflow(workflowId);
+        await _workflowService.RunWorkflow(req);
         return Ok(new object());
     }
 }
