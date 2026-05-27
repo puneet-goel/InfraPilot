@@ -1,6 +1,7 @@
 services:
   infrapilot:
     image: puneetgoel16/infrapilot:latest
+    pull_policy: always
     container_name: infrapilot
     ports:
       - "8080:8080"

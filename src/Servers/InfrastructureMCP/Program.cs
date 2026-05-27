@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Server;
 
 HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 builder.Logging.AddConsole(consoleLogOptions =>
