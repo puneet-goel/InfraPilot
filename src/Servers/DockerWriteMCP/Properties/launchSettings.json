@@ -4,8 +4,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "KUBE_HOST": "https://localhost:63408",
-        "KUBE_TOKEN": "YOUR_TOKEN"
+        "CONTAINER_RUNTIME": "docker"
       }
     },
     "WSL": {

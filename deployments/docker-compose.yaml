@@ -7,10 +7,19 @@ services:
       - '8080:8080'
     environment:
       ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
       LLM_CRED: YOUR_API_KEY
       LLM_MODEL: gemini-2.5-flash
       LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai/
       POSTGRES: Host=postgres;Port=5432;Database=infrapilot;Username=postgres;Password=postgres123
+      KUBE_HOST: https://host.docker.internal:63408
+      KUBE_TOKEN: kube_token
+      CONTAINER_RUNTIME: docker
+      # CONTAINER_SOCKET: unix:///run/user/1000/podman/podman.sock
+      CONTAINER_SOCKET: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # - /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock
     depends_on:
       - postgres
 

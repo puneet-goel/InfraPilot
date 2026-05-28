@@ -2,36 +2,36 @@
 using Agents.Utility;
 using Microsoft.Extensions.AI;
 
-namespace Agents.Agents.Deployment;
+namespace Agents.Agents.DockerWrite;
 
-public class DeploymentAgent: IAgent
+public class DockerWriteAgent: IAgent
 {
     private readonly IChatClient _chatClient;
 
-    public DeploymentAgent(IChatClient chatClient)
+    public DockerWriteAgent(IChatClient chatClient)
     {
         _chatClient = chatClient;
     }
 
-    public string Name => "DeploymentAgent";
+    public string Name => "DockerWriteAgent";
 
     public bool IsWriteAgent => true;
 
     public string Description =>
     """
     Handles:
-    - Kubernetes infrastructure provisioning
-    - deployment creation and updates
-    - pod creation
-    - service creation
-    - namespace management
-    - rollout restarts
-    - scaling workloads
-    - deployment image updates
-    - Kubernetes workload modifications
-    - infrastructure change execution
-    - cluster resource provisioning
-    - Kubernetes runtime operations
+    - Docker container lifecycle management
+    - Podman container lifecycle management
+    - container creation and removal
+    - starting and stopping containers
+    - restarting workloads
+    - image management
+    - pulling and removing images
+    - Docker and Podman network operations
+    - volume management
+    - infrastructure cleanup and pruning
+    - container runtime infrastructure operations
+    - runtime-level infrastructure changes
     """;
 
     public async Task<AgentResult> AnalyzeAsync(string query, List<ChatMessage> prevMessages)
@@ -42,47 +42,45 @@ public class DeploymentAgent: IAgent
         {
             Tools = tools,
             Instructions = """
-            You are a Kubernetes infrastructure provisioning expert
-            specializing in Kubernetes workload deployment and
-            cluster resource management.
+            You are a container runtime infrastructure expert specializing
+            in Docker and Podman operations.
 
             Your responsibilities:
-            - create deployments
-            - create pods
-            - create services
-            - create namespaces
-            - restart deployments
-            - scale workloads
-            - update deployment container images
-            - execute Kubernetes infrastructure changes
+            - create containers
+            - start containers
+            - stop containers
+            - restart containers
+            - remove containers
+            - pull images
+            - remove images
+            - create networks
+            - remove networks
+            - create volumes
+            - remove volumes
+            - prune unused resources
 
             ONLY perform actions explicitly requested by the user.
 
             Rules:
             - If the request contains enough information to execute a tool,
-              you MUST call the tool immediately.
+                you MUST call the tool immediately.
             - Do NOT ask for confirmation.
             - Do NOT explain available tools.
             - Do NOT say things like:
-              "I can do that"
-              "I will help you"
-              "Here is what I will do"
+                "I can do that"
+                "I will help you"
+                "Here is what I will do"
             - Prefer tool execution over conversational responses.
             - Only ask questions if required parameters are missing.
             - If clarification is required,
-              wrap the response in:
-              <Question></Question>
-            - Never invent:
-              deployment names,
-              container images,
-              ports,
-              namespaces,
-              replica counts,
-              or service types.
+                wrap the response in:
+                <Question></Question>
+            - Never invent missing container names,
+                image names,
+                ports,
+                or runtime values.
             - Keep responses concise and operational.
             - Focus on execution rather than explanation.
-            - Avoid generating Kubernetes YAML unless explicitly requested.
-            - Use the provided tools directly whenever possible.
             """
         };
 

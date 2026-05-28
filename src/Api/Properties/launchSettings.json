@@ -1,31 +1,29 @@
 ﻿{
-  "$schema": "http://json.schemastore.org/launchsettings.json",
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:40737",
-      "sslPort": 44351
-    }
-  },
-  "profiles": {
-    "https": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": true,
-      "launchUrl": "swagger",
-      "applicationUrl": "https://localhost:7261;http://localhost:5069",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "launchUrl": "swagger",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      }
-    }
-  }
+	"$schema": "http://json.schemastore.org/launchsettings.json",
+	"iisSettings": {
+		"windowsAuthentication": false,
+		"anonymousAuthentication": true,
+		"iisExpress": {
+			"applicationUrl": "http://localhost:40737",
+			"sslPort": 44351
+		}
+	},
+	"profiles": {
+		"https": {
+			"commandName": "Project",
+			"dotnetRunMessages": true,
+			"launchBrowser": true,
+			"launchUrl": "swagger",
+			"applicationUrl": "https://localhost:7261;http://localhost:5069",
+			"environmentVariables": {
+				"ASPNETCORE_ENVIRONMENT": "Development",
+				"LLM_CRED": "YOUR_API_KEY",
+				"LLM_MODEL": "gemini-2.5-flash-lite",
+				"LLM_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai/",
+				"POSTGRES": "YOUR_DATABASE_CONNECTION_STRING",
+				"KUBE_HOST": "https://localhost:63408",
+				"KUBE_TOKEN": "YOUR_KUBE_TOKEN"
+			}
+		}
+	}
 }

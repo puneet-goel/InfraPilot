@@ -60,42 +60,44 @@ public class DeploymentTools
 
         [Description("Namespace")] string ns = "default")
     {
-        V1Deployment deployment = new()
+        try
         {
-            ApiVersion = "apps/v1",
-            Kind = "Deployment",
-            Metadata = new V1ObjectMeta
+            V1Deployment deployment = new()
             {
-                Name = name,
-                NamespaceProperty = ns
-            },
-
-            Spec = new V1DeploymentSpec
-            {
-                Replicas = replicas,
-                Selector = new V1LabelSelector
+                ApiVersion = "apps/v1",
+                Kind = "Deployment",
+                Metadata = new V1ObjectMeta
                 {
-                    MatchLabels = new Dictionary<string, string>
-                    {
-                        ["app"] = name
-                    }
+                    Name = name,
+                    NamespaceProperty = ns
                 },
 
-                Template = new V1PodTemplateSpec
+                Spec = new V1DeploymentSpec
                 {
-                    Metadata = new V1ObjectMeta
+                    Replicas = replicas,
+                    Selector = new V1LabelSelector
                     {
-                        Labels = new Dictionary<string, string>
+                        MatchLabels = new Dictionary<string, string>
                         {
                             ["app"] = name
                         }
                     },
 
-                    Spec = new V1PodSpec
+                    Template = new V1PodTemplateSpec
                     {
-                        Containers =
-                        [
-                            new V1Container
+                        Metadata = new V1ObjectMeta
+                        {
+                            Labels = new Dictionary<string, string>
+                            {
+                                ["app"] = name
+                            }
+                        },
+
+                        Spec = new V1PodSpec
+                        {
+                            Containers =
+                            [
+                                new V1Container
                             {
                                 Name = name,
                                 Image = image,
@@ -107,28 +109,38 @@ public class DeploymentTools
                                     }
                                 ]
                             }
-                        ]
+                            ]
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        V1Deployment result =
-            await _client.AppsV1.CreateNamespacedDeploymentAsync(
-                deployment,
-                ns);
+            V1Deployment result =
+                await _client.AppsV1.CreateNamespacedDeploymentAsync(
+                    deployment,
+                    ns);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                Message = "Deployment created successfully",
-                result.Metadata.Name,
-                Namespace = result.Metadata.NamespaceProperty,
-                result.Spec.Replicas,
-                result.Status?.AvailableReplicas,
-                Image = image
-            },
-            _options);
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Message = "Deployment created successfully",
+                    result.Metadata.Name,
+                    Namespace = result.Metadata.NamespaceProperty,
+                    result.Spec.Replicas,
+                    result.Status?.AvailableReplicas,
+                    Image = image
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -136,27 +148,39 @@ public class DeploymentTools
     public async Task<string> CreateNamespace(
         [Description("Namespace name")] string name)
     {
-        V1Namespace ns = new()
+        try
         {
-            ApiVersion = "v1",
-            Kind = "Namespace",
-            Metadata = new V1ObjectMeta
+            V1Namespace ns = new()
             {
-                Name = name
-            }
-        };
+                ApiVersion = "v1",
+                Kind = "Namespace",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = name
+                }
+            };
 
-        V1Namespace result =
-            await _client.CoreV1.CreateNamespaceAsync(ns);
+            V1Namespace result =
+                await _client.CoreV1.CreateNamespaceAsync(ns);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                Message = "Namespace created successfully",
-                result.Metadata.Name,
-                Status = result.Status?.Phase
-            },
-            _options);
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Message = "Namespace created successfully",
+                    result.Metadata.Name,
+                    Status = result.Status?.Phase
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -170,21 +194,23 @@ public class DeploymentTools
 
         [Description("Namespace")] string ns = "default")
     {
-        V1Pod pod = new()
+        try
         {
-            ApiVersion = "v1",
-            Kind = "Pod",
-            Metadata = new V1ObjectMeta
+            V1Pod pod = new()
             {
-                Name = name,
-                NamespaceProperty = ns
-            },
+                ApiVersion = "v1",
+                Kind = "Pod",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = name,
+                    NamespaceProperty = ns
+                },
 
-            Spec = new V1PodSpec
-            {
-                Containers =
-                [
-                    new V1Container
+                Spec = new V1PodSpec
+                {
+                    Containers =
+                    [
+                        new V1Container
                     {
                         Name = name,
                         Image = image,
@@ -196,27 +222,37 @@ public class DeploymentTools
                             }
                         ]
                     }
-                ]
-            }
-        };
+                    ]
+                }
+            };
 
-        V1Pod result =
-            await _client.CoreV1.CreateNamespacedPodAsync(
-                pod,
-                ns);
+            V1Pod result =
+                await _client.CoreV1.CreateNamespacedPodAsync(
+                    pod,
+                    ns);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                Message = "Pod created successfully",
-                result.Metadata.Name,
-                Namespace = result.Metadata.NamespaceProperty,
-                result.Status?.Phase,
-                result.Status?.PodIP,
-                Node = result.Spec?.NodeName,
-                Image = image
-            },
-            _options);
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Message = "Pod created successfully",
+                    result.Metadata.Name,
+                    Namespace = result.Metadata.NamespaceProperty,
+                    result.Status?.Phase,
+                    result.Status?.PodIP,
+                    Node = result.Spec?.NodeName,
+                    Image = image
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -234,54 +270,66 @@ public class DeploymentTools
 
         [Description("Namespace")] string ns = "default")
     {
-        V1Service service = new()
+        try
         {
-            ApiVersion = "v1",
-            Kind = "Service",
-            Metadata = new V1ObjectMeta
+            V1Service service = new()
             {
-                Name = name,
-                NamespaceProperty = ns
-            },
-
-            Spec = new V1ServiceSpec
-            {
-                Type = type,
-                Selector = new Dictionary<string, string>
+                ApiVersion = "v1",
+                Kind = "Service",
+                Metadata = new V1ObjectMeta
                 {
-                    ["app"] = selector
+                    Name = name,
+                    NamespaceProperty = ns
                 },
-                Ports =
-                [
-                    new V1ServicePort
+
+                Spec = new V1ServiceSpec
+                {
+                    Type = type,
+                    Selector = new Dictionary<string, string>
+                    {
+                        ["app"] = selector
+                    },
+                    Ports =
+                    [
+                        new V1ServicePort
                     {
                         Port = port,
                         TargetPort = targetPort
                     }
-                ]
-            }
-        };
+                    ]
+                }
+            };
 
-        V1Service result =
-            await _client.CoreV1.CreateNamespacedServiceAsync(
-                service,
-                ns);
+            V1Service result =
+                await _client.CoreV1.CreateNamespacedServiceAsync(
+                    service,
+                    ns);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                Message = "Service created successfully",
-                result.Metadata.Name,
-                Namespace = result.Metadata.NamespaceProperty,
-                result.Spec.Type,
-                result.Spec.ClusterIP,
-                Ports = result.Spec.Ports.Select(p => new
+            return JsonSerializer.Serialize(
+                new
                 {
-                    p.Port,
-                    p.TargetPort
-                })
-            },
-            _options);
+                    Message = "Service created successfully",
+                    result.Metadata.Name,
+                    Namespace = result.Metadata.NamespaceProperty,
+                    result.Spec.Type,
+                    result.Spec.ClusterIP,
+                    Ports = result.Spec.Ports.Select(p => new
+                    {
+                        p.Port,
+                        p.TargetPort
+                    })
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -291,37 +339,49 @@ public class DeploymentTools
 
         [Description("Namespace")] string ns = "default")
     {
-        V1Deployment deployment =
-            await _client.AppsV1.ReadNamespacedDeploymentAsync(
-                deploymentName,
-                ns);
+        try
+        {
+            V1Deployment deployment =
+                await _client.AppsV1.ReadNamespacedDeploymentAsync(
+                    deploymentName,
+                    ns);
 
-        deployment.Spec.Template.Metadata ??=
-            new V1ObjectMeta();
+            deployment.Spec.Template.Metadata ??=
+                new V1ObjectMeta();
 
-        deployment.Spec.Template.Metadata.Annotations ??=
-            new Dictionary<string, string>();
+            deployment.Spec.Template.Metadata.Annotations ??=
+                new Dictionary<string, string>();
 
-        deployment.Spec.Template.Metadata.Annotations[
-            "kubectl.kubernetes.io/restartedAt"
-        ] = DateTime.UtcNow.ToString("O");
+            deployment.Spec.Template.Metadata.Annotations[
+                "kubectl.kubernetes.io/restartedAt"
+            ] = DateTime.UtcNow.ToString("O");
 
-        V1Deployment result =
-            await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
-                deployment,
-                deploymentName,
-                ns);
+            V1Deployment result =
+                await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
+                    deployment,
+                    deploymentName,
+                    ns);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                Message = "Deployment restarted successfully",
-                result.Metadata.Name,
-                Namespace = result.Metadata.NamespaceProperty,
-                result.Spec.Replicas,
-                result.Status?.UpdatedReplicas
-            },
-            _options);
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Message = "Deployment restarted successfully",
+                    result.Metadata.Name,
+                    Namespace = result.Metadata.NamespaceProperty,
+                    result.Spec.Replicas,
+                    result.Status?.UpdatedReplicas
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -333,30 +393,42 @@ public class DeploymentTools
 
         [Description("Namespace")] string ns = "default")
     {
-        V1Deployment deployment =
-            await _client.AppsV1.ReadNamespacedDeploymentAsync(
-                deploymentName,
-                ns);
+        try
+        {
+            V1Deployment deployment =
+                await _client.AppsV1.ReadNamespacedDeploymentAsync(
+                    deploymentName,
+                    ns);
 
-        deployment.Spec.Replicas = replicas;
+            deployment.Spec.Replicas = replicas;
 
-        V1Deployment result =
-            await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
-                deployment,
-                deploymentName,
-                ns);
+            V1Deployment result =
+                await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
+                    deployment,
+                    deploymentName,
+                    ns);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                Message = "Deployment scaled successfully",
-                result.Metadata.Name,
-                Namespace = result.Metadata.NamespaceProperty,
-                DesiredReplicas = result.Spec.Replicas,
-                result.Status?.ReadyReplicas,
-                result.Status?.AvailableReplicas
-            },
-            _options);
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Message = "Deployment scaled successfully",
+                    result.Metadata.Name,
+                    Namespace = result.Metadata.NamespaceProperty,
+                    DesiredReplicas = result.Spec.Replicas,
+                    result.Status?.ReadyReplicas,
+                    result.Status?.AvailableReplicas
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -370,39 +442,51 @@ public class DeploymentTools
 
         [Description("Namespace")] string ns = "default")
     {
-        V1Deployment deployment =
-            await _client.AppsV1.ReadNamespacedDeploymentAsync(
-                deploymentName,
-                ns);
-
-        V1Container? container =
-            deployment.Spec.Template.Spec.Containers
-                .FirstOrDefault(c => c.Name == containerName);
-
-        if (container is null)
+        try
         {
-            throw new Exception(
-                $"Container '{containerName}' not found.");
-        }
+            V1Deployment deployment =
+                await _client.AppsV1.ReadNamespacedDeploymentAsync(
+                    deploymentName,
+                    ns);
 
-        container.Image = image;
+            V1Container? container =
+                deployment.Spec.Template.Spec.Containers
+                    .FirstOrDefault(c => c.Name == containerName);
 
-        V1Deployment result =
-            await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
-                deployment,
-                deploymentName,
-                ns);
-
-        return JsonSerializer.Serialize(
-            new
+            if (container is null)
             {
-                Message = "Deployment image updated successfully",
-                Deployment = result.Metadata.Name,
-                Namespace = result.Metadata.NamespaceProperty,
-                Container = containerName,
-                NewImage = image,
-                result.Status?.UpdatedReplicas
-            },
-            _options);
+                throw new Exception(
+                    $"Container '{containerName}' not found.");
+            }
+
+            container.Image = image;
+
+            V1Deployment result =
+                await _client.AppsV1.ReplaceNamespacedDeploymentAsync(
+                    deployment,
+                    deploymentName,
+                    ns);
+
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Message = "Deployment image updated successfully",
+                    Deployment = result.Metadata.Name,
+                    Namespace = result.Metadata.NamespaceProperty,
+                    Container = containerName,
+                    NewImage = image,
+                    result.Status?.UpdatedReplicas
+                },
+                _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 }

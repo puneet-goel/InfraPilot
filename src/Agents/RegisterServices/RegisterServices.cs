@@ -1,6 +1,8 @@
 ﻿using Agents.AgentInteractor;
 using Agents.Agents;
 using Agents.Agents.Deployment;
+using Agents.Agents.DockerRead;
+using Agents.Agents.DockerWrite;
 using Agents.Agents.Infrastructure;
 using Agents.Agents.Orchestrator;
 using Agents.Agents.RootReviewer;
@@ -17,6 +19,8 @@ public static class AgentServiceExtensions
         services.AddScoped<IAgent, DeploymentAgent>();
         services.AddScoped<IAgent, RootReviewerAgent>();
         services.AddScoped<IAgent, InfrastructureAgent>();
+        services.AddScoped<IAgent, DockerReadAgent>();
+        services.AddScoped<IAgent, DockerWriteAgent>();
         services.AddScoped<OrchestratorAgent>();
         services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
         services.AddScoped<IWorkflowEngine, WorkflowEngine>();

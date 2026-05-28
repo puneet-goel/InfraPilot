@@ -52,19 +52,31 @@ public class KubernetesTools
         [Description("Kubernetes resource type")]
         string resourceType)
     {
-        object result = resourceType.ToLower() switch
+        try
         {
-            "pods" => await GetPodsSummary(),
-            "deployments" => await GetDeploymentsSummary(),
-            "nodes" => await GetNodesSummary(),
-            "services" or "svc" => await GetServicesSummary(),
-            "configmaps" => await GetConfigMapsSummary(),
-            "secrets" => await GetSecretsSummary(),
-            _ => throw new Exception(
-                $"Unsupported resource type: {resourceType}")
-        };
+            object result = resourceType.ToLower() switch
+            {
+                "pods" => await GetPodsSummary(),
+                "deployments" => await GetDeploymentsSummary(),
+                "nodes" => await GetNodesSummary(),
+                "services" or "svc" => await GetServicesSummary(),
+                "configmaps" => await GetConfigMapsSummary(),
+                "secrets" => await GetSecretsSummary(),
+                _ => throw new Exception(
+                    $"Unsupported resource type: {resourceType}")
+            };
 
-        return JsonSerializer.Serialize(result, _options);
+            return JsonSerializer.Serialize(result, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -79,31 +91,43 @@ public class KubernetesTools
         [Description("Namespace")]
         string ns = "default")
     {
-        object result = resourceType.ToLower() switch
+        try
         {
-            "pods" or "pod" =>
-                await DescribePod(resourceName, ns),
+            object result = resourceType.ToLower() switch
+            {
+                "pods" or "pod" =>
+                    await DescribePod(resourceName, ns),
 
-            "deployments" or "deployment" =>
-                await DescribeDeployment(resourceName, ns),
+                "deployments" or "deployment" =>
+                    await DescribeDeployment(resourceName, ns),
 
-            "services" or "service" or "svc" =>
-                await DescribeService(resourceName, ns),
+                "services" or "service" or "svc" =>
+                    await DescribeService(resourceName, ns),
 
-            "configmaps" or "configmap" =>
-                await DescribeConfigMap(resourceName, ns),
+                "configmaps" or "configmap" =>
+                    await DescribeConfigMap(resourceName, ns),
 
-            "secrets" or "secret" =>
-                await DescribeSecret(resourceName, ns),
+                "secrets" or "secret" =>
+                    await DescribeSecret(resourceName, ns),
 
-            "nodes" or "node" =>
-                await DescribeNode(resourceName),
+                "nodes" or "node" =>
+                    await DescribeNode(resourceName),
 
-            _ => throw new Exception(
-                $"Unsupported resource type: {resourceType}")
-        };
+                _ => throw new Exception(
+                    $"Unsupported resource type: {resourceType}")
+            };
 
-        return JsonSerializer.Serialize(result, _options);
+            return JsonSerializer.Serialize(result, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -115,35 +139,59 @@ public class KubernetesTools
         [Description("Namespace")]
         string ns = "default")
     {
-        using Stream logStream =
-            await _client.CoreV1.ReadNamespacedPodLogAsync(
-                podName,
-                ns);
+        try
+        {
+            using Stream logStream =
+                await _client.CoreV1.ReadNamespacedPodLogAsync(
+                    podName,
+                    ns);
 
-        using StreamReader reader = new(logStream);
+            using StreamReader reader = new(logStream);
 
-        string logs = await reader.ReadToEndAsync();
+            string logs = await reader.ReadToEndAsync();
 
-        return string.Join(
-            Environment.NewLine,
-            logs.Split('\n').TakeLast(100));
+            return string.Join(
+                Environment.NewLine,
+                logs.Split('\n').TakeLast(100));
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
     [Description("Get Kubernetes service accounts")]
     public async Task<string> GetServiceAccounts()
     {
-        V1ServiceAccountList result =
-            await _client.CoreV1.ListServiceAccountForAllNamespacesAsync();
-
-        var summary = result.Items.Select(sa => new
+        try
         {
-            sa.Metadata.Name,
-            Namespace = sa.Metadata.NamespaceProperty,
-            Secrets = sa.Secrets?.Count ?? 0
-        });
+            V1ServiceAccountList result =
+                await _client.CoreV1.ListServiceAccountForAllNamespacesAsync();
 
-        return JsonSerializer.Serialize(summary, _options);
+            var summary = result.Items.Select(sa => new
+            {
+                sa.Metadata.Name,
+                Namespace = sa.Metadata.NamespaceProperty,
+                Secrets = sa.Secrets?.Count ?? 0
+            });
+
+            return JsonSerializer.Serialize(summary, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -155,24 +203,36 @@ public class KubernetesTools
         [Description("Namespace")]
         string ns = "default")
     {
-        V1Pod pod =
-            await _client.CoreV1.ReadNamespacedPodAsync(
-                podName,
-                ns);
-
-        var securityContext = new
+        try
         {
-            Pod = pod.Metadata.Name,
-            Namespace = pod.Metadata.NamespaceProperty,
-            PodSecurityContext = pod.Spec.SecurityContext,
-            Containers = pod.Spec.Containers.Select(c => new
-            {
-                c.Name,
-                c.SecurityContext
-            })
-        };
+            V1Pod pod =
+                await _client.CoreV1.ReadNamespacedPodAsync(
+                    podName,
+                    ns);
 
-        return JsonSerializer.Serialize(securityContext, _options);
+            var securityContext = new
+            {
+                Pod = pod.Metadata.Name,
+                Namespace = pod.Metadata.NamespaceProperty,
+                PodSecurityContext = pod.Spec.SecurityContext,
+                Containers = pod.Spec.Containers.Select(c => new
+                {
+                    c.Name,
+                    c.SecurityContext
+                })
+            };
+
+            return JsonSerializer.Serialize(securityContext, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -184,26 +244,38 @@ public class KubernetesTools
         [Description("Namespace")]
         string ns = "default")
     {
-        V1Deployment deployment =
-            await _client.AppsV1.ReadNamespacedDeploymentAsync(
-                deploymentName,
-                ns);
-
-        var securitySpec = new
+        try
         {
-            Deployment = deployment.Metadata.Name,
-            Namespace = deployment.Metadata.NamespaceProperty,
-            PodSecurityContext =
-                deployment.Spec.Template.Spec.SecurityContext,
-            Containers =
-                deployment.Spec.Template.Spec.Containers.Select(c => new
-                {
-                    c.Name,
-                    c.SecurityContext
-                })
-        };
+            V1Deployment deployment =
+                await _client.AppsV1.ReadNamespacedDeploymentAsync(
+                    deploymentName,
+                    ns);
 
-        return JsonSerializer.Serialize(securitySpec, _options);
+            var securitySpec = new
+            {
+                Deployment = deployment.Metadata.Name,
+                Namespace = deployment.Metadata.NamespaceProperty,
+                PodSecurityContext =
+                    deployment.Spec.Template.Spec.SecurityContext,
+                Containers =
+                    deployment.Spec.Template.Spec.Containers.Select(c => new
+                    {
+                        c.Name,
+                        c.SecurityContext
+                    })
+            };
+
+            return JsonSerializer.Serialize(securitySpec, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
@@ -215,53 +287,89 @@ public class KubernetesTools
         [Description("Namespace")]
         string ns = "default")
     {
-        V1ServiceAccount result =
-            await _client.CoreV1.ReadNamespacedServiceAccountAsync(
-                serviceAccount,
-                ns);
-
-        var summary = new
+        try
         {
-            result.Metadata.Name,
-            Namespace = result.Metadata.NamespaceProperty,
-            Secrets = result.Secrets?.Select(s => s.Name)
-        };
+            V1ServiceAccount result =
+                await _client.CoreV1.ReadNamespacedServiceAccountAsync(
+                    serviceAccount,
+                    ns);
 
-        return JsonSerializer.Serialize(summary, _options);
+            var summary = new
+            {
+                result.Metadata.Name,
+                Namespace = result.Metadata.NamespaceProperty,
+                Secrets = result.Secrets?.Select(s => s.Name)
+            };
+
+            return JsonSerializer.Serialize(summary, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
     [Description("Get Kubernetes ingresses")]
     public async Task<string> GetIngresses()
     {
-        V1IngressList result =
-            await _client.NetworkingV1.ListIngressForAllNamespacesAsync();
-
-        var summary = result.Items.Select(i => new
+        try
         {
-            i.Metadata.Name,
-            Namespace = i.Metadata.NamespaceProperty,
-            Hosts = i.Spec.Rules?.Select(r => r.Host)
-        });
+            V1IngressList result =
+                await _client.NetworkingV1.ListIngressForAllNamespacesAsync();
 
-        return JsonSerializer.Serialize(summary, _options);
+            var summary = result.Items.Select(i => new
+            {
+                i.Metadata.Name,
+                Namespace = i.Metadata.NamespaceProperty,
+                Hosts = i.Spec.Rules?.Select(r => r.Host)
+            });
+
+            return JsonSerializer.Serialize(summary, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     [McpServerTool]
     [Description("Get Kubernetes network policies")]
     public async Task<string> GetNetworkPolicies()
     {
-        V1NetworkPolicyList result =
-            await _client.NetworkingV1.ListNetworkPolicyForAllNamespacesAsync();
-
-        var summary = result.Items.Select(np => new
+        try
         {
-            np.Metadata.Name,
-            Namespace = np.Metadata.NamespaceProperty,
-            np.Spec.PolicyTypes
-        });
+            V1NetworkPolicyList result =
+                await _client.NetworkingV1.ListNetworkPolicyForAllNamespacesAsync();
 
-        return JsonSerializer.Serialize(summary, _options);
+            var summary = result.Items.Select(np => new
+            {
+                np.Metadata.Name,
+                Namespace = np.Metadata.NamespaceProperty,
+                np.Spec.PolicyTypes
+            });
+
+            return JsonSerializer.Serialize(summary, _options);
+        }
+        catch (Exception ex)
+        {
+            return JsonSerializer.Serialize(
+                new
+                {
+                    Error = ex.Message
+                },
+                _options);
+        }
     }
 
     private async Task<object> GetPodsSummary()

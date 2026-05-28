@@ -22,6 +22,8 @@ WORKDIR /src
 # Copy csproj files first for docker layer caching
 COPY ["src/Servers/DeploymentMCP/DeploymentMCP.csproj", "src/Servers/DeploymentMCP/"]
 COPY ["src/Servers/InfrastructureMCP/InfrastructureMCP.csproj", "src/Servers/InfrastructureMCP/"]
+COPY ["src/Servers/DockerReadMCP/DockerReadMCP.csproj", "src/Servers/DockerReadMCP/"]
+COPY ["src/Servers/DockerWriteMCP/DockerWriteMCP.csproj", "src/Servers/DockerWriteMCP/"]
 COPY ["src/Api/Api.csproj", "src/Api/"]
 COPY ["src/Agents/Agents.csproj", "src/Agents/"]
 COPY ["src/Database/Database.csproj", "src/Database/"]
@@ -57,6 +59,14 @@ RUN dotnet publish "./DeploymentMCP.csproj" -c $BUILD_CONFIGURATION -o /app/publ
 # Publish InfrastructureMCP
 WORKDIR /src/src/Servers/InfrastructureMCP
 RUN dotnet publish "./InfrastructureMCP.csproj" -c $BUILD_CONFIGURATION -o /app/publish/mcp/infrastructure /p:UseAppHost=false
+
+# Publish DockerReadMCP
+WORKDIR /src/src/Servers/DockerReadMCP
+RUN dotnet publish "./DockerReadMCP.csproj" -c $BUILD_CONFIGURATION -o /app/publish/mcp/dockerread /p:UseAppHost=false
+
+# Publish DockerWriteMCP
+WORKDIR /src/src/Servers/DockerWriteMCP
+RUN dotnet publish "./DockerWriteMCP.csproj" -c $BUILD_CONFIGURATION -o /app/publish/mcp/dockerwrite /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
