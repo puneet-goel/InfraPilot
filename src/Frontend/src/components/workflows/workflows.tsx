@@ -475,7 +475,7 @@ const Workflow = () => {
 					/>
 				</Paper>
 
-				{planDialogOpen && (
+				{planDialogOpen && selectedWorkflow && (
 					<PlanDialogBox
 						planDialogOpen={planDialogOpen}
 						setPlanDialogOpen={setPlanDialogOpen}
@@ -483,7 +483,7 @@ const Workflow = () => {
 					/>
 				)}
 
-				{rerunDialogOpen && (
+				{rerunDialogOpen && selectedWorkflow && (
 					<ReRunDialogBox
 						rerunDialogOpen={rerunDialogOpen}
 						setRerunDialogOpen={setRerunDialogOpen}
@@ -491,7 +491,7 @@ const Workflow = () => {
 					/>
 				)}
 
-				{approvalDialogOpen && (
+				{approvalDialogOpen && selectedWorkflow && (
 					<ApprovalDialogBox
 						approvalDialogOpen={approvalDialogOpen}
 						setApprovalDialogOpen={setApprovalDialogOpen}
