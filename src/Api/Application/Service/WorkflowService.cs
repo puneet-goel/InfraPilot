@@ -7,16 +7,10 @@ using Hangfire;
 
 namespace Api.Application.Service;
 
-public class WorkflowService: IWorkflowService
+public class WorkflowService(IWorkflowRepository workflowRepository, IWorkflowExecutionRepository workflowExecutionRepository) : IWorkflowService
 {
-    private readonly IWorkflowRepository _workflowRepository;
-    private readonly IWorkflowExecutionRepository _workflowExecutionRepository;
-
-    public WorkflowService(IWorkflowRepository workflowRepository, IWorkflowExecutionRepository workflowExecutionRepository)
-    {
-        _workflowRepository = workflowRepository;
-        _workflowExecutionRepository = workflowExecutionRepository;
-    }
+    private readonly IWorkflowRepository _workflowRepository = workflowRepository;
+    private readonly IWorkflowExecutionRepository _workflowExecutionRepository = workflowExecutionRepository;
 
     public async Task<CreateWorkflow> CreateWorkflowAsync(string userRequest)
     {

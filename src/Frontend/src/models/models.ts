@@ -57,3 +57,11 @@ export type ReRunWorkflowRequest = {
 	executionId: string
 	useSamePlan: boolean
 }
+
+export type WorkflowEventType = 'FullMessageHistory'
+
+export type WorkflowEvent = {
+	Type: WorkflowEventType
+	ApprovalRequired: boolean
+	Result: AgentOutput[]
+}

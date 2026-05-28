@@ -74,8 +74,11 @@ const getStatusStyles = (status: string) => {
 }
 
 const Workflow = () => {
-	const { data: workflowExecutions = [], isLoading } =
-		useGetWorkflowExecutions()
+	const {
+		data: workflowExecutions = [],
+		isLoading,
+		refetch
+	} = useGetWorkflowExecutions()
 	const [planDialogOpen, setPlanDialogOpen] = useState(false)
 	const [selectedWorkflow, setSelectedWorkflow] =
 		useState<WorkflowExecution | null>(null)
@@ -117,7 +120,7 @@ const Workflow = () => {
 		{
 			field: 'currentAgent',
 			headerName: 'Current Agent',
-			width: 150,
+			width: 150
 		},
 		{
 			field: 'reason',
@@ -164,7 +167,7 @@ const Workflow = () => {
 				}).format(value)
 			}
 		},
-				{
+		{
 			field: 'agentOutput',
 			headerName: 'Trace',
 			width: 70,
@@ -288,25 +291,45 @@ const Workflow = () => {
 						active agent execution status.
 					</Typography>
 
-					<Stack
-						direction='row'
-						spacing={1.5}
-						sx={{ flexWrap: 'wrap', justifyContent: 'end' }}
+					<Box
+						sx={{
+							display: 'flex',
+							flexWrap: 'wrap',
+							justifyContent: 'space-between'
+						}}
 					>
-						{WORKFLOW_STATUSES.map((status) => {
-							const styles = getStatusStyles(status)
-							return (
-								<Chip
-									label={status}
-									key={status}
-									sx={{
-										...styles,
-										fontWeight: 700
-									}}
-								/>
-							)
-						})}
-					</Stack>
+						<Stack direction='row' spacing={1.5}>
+							{WORKFLOW_STATUSES.map((status) => {
+								const styles = getStatusStyles(status)
+								return (
+									<Chip
+										label={status}
+										key={status}
+										sx={{
+											...styles,
+											fontWeight: 700
+										}}
+									/>
+								)
+							})}
+						</Stack>
+						<Tooltip title='Refresh' arrow>
+							<IconButton
+								onClick={() => {
+									refetch()
+								}}
+								sx={{
+									color: '#60a5fa',
+									mr: 2,
+									'&:hover': {
+										background: 'rgba(37,99,235,0.12)'
+									}
+								}}
+							>
+								<ReplayRoundedIcon />
+							</IconButton>
+						</Tooltip>
+					</Box>
 				</Stack>
 
 				<Paper
@@ -452,7 +475,7 @@ const Workflow = () => {
 					/>
 				</Paper>
 
-				{selectedWorkflow && (
+				{planDialogOpen && (
 					<PlanDialogBox
 						planDialogOpen={planDialogOpen}
 						setPlanDialogOpen={setPlanDialogOpen}
@@ -460,7 +483,7 @@ const Workflow = () => {
 					/>
 				)}
 
-				{selectedWorkflow && (
+				{rerunDialogOpen && (
 					<ReRunDialogBox
 						rerunDialogOpen={rerunDialogOpen}
 						setRerunDialogOpen={setRerunDialogOpen}
@@ -468,7 +491,7 @@ const Workflow = () => {
 					/>
 				)}
 
-				{selectedWorkflow && (
+				{approvalDialogOpen && (
 					<ApprovalDialogBox
 						approvalDialogOpen={approvalDialogOpen}
 						setApprovalDialogOpen={setApprovalDialogOpen}

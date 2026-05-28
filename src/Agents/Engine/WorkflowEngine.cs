@@ -1,6 +1,7 @@
 ﻿using Agents.AgentInteractor;
 using Agents.Agents;
 using Agents.Agents.Orchestrator;
+using Agents.EventBus;
 using Agents.Utility;
 using Agents.Workflow;
 using Database.Domain;
@@ -15,13 +16,15 @@ public class WorkflowEngine(
     IAgentClientInteractor agentClient,
     IEnumerable<IAgent> agents,
     IWorkflowExecutionRepository workflowExecutionRepository,
-    OrchestratorAgent orchestratorAgent
+    OrchestratorAgent orchestratorAgent,
+    WorkflowEventBus eventBus
 ) : IWorkflowEngine
 {
     private readonly IAgentClientInteractor _agentClient = agentClient;
     private readonly IEnumerable<IAgent> _agents = agents;
     private readonly OrchestratorAgent _orchestratorAgent = orchestratorAgent;
     private readonly IWorkflowExecutionRepository _workflowExecutionRepository = workflowExecutionRepository;
+    private readonly WorkflowEventBus _eventBus = eventBus;
 
     [AutomaticRetry(Attempts = 0)]
     public async Task ExecuteAsync(Guid executorId)
@@ -128,8 +131,7 @@ public class WorkflowEngine(
                     // take out previous history in case of resume
                     List<ChatMessage> prevMessages = lastOutputSaved == null
                         ? []
-                        : AIHelpers.ConvertToAgentResult(lastOutputSaved.Steps.First(ele => ele.AgentName == step.AgentName));
-
+                        : AIHelpers.ConvertToAgentResult(lastOutputSaved?.Steps?.First(ele => ele.AgentName == step.AgentName));
                     agentResponse = await _agentClient.ExecuteAsync(step.AgentName, step.Task, prevMessages);
                 }
 
@@ -145,6 +147,15 @@ public class WorkflowEngine(
                     workflowExecution.AgentOutput = JsonSerializer.Serialize(results);
                     workflowExecution.Status = "ApprovalRequired";
                     await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
+                    await _eventBus.PublishAsync(
+                        workflowExecution.ExecutionId,
+                        new WorkflowEvent
+                        {
+                            Type = WorkflowEventType.FullMessageHistory,
+                            Result = results.Steps,
+                            ApprovalRequired = true
+                        });
+
                     return;
                 }
 
@@ -153,6 +164,13 @@ public class WorkflowEngine(
    
                 workflowExecution.AgentOutput = JsonSerializer.Serialize(results);
                 await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
+                await _eventBus.PublishAsync(
+                    workflowExecution.ExecutionId,
+                    new WorkflowEvent
+                    {
+                        Type = WorkflowEventType.FullMessageHistory,
+                        Result = results.Steps,
+                    });
             }
 
             workflowExecution.Reason = "Workflow executed successfully";
@@ -164,6 +182,10 @@ public class WorkflowEngine(
             workflowExecution.Reason = ex.Message;
             workflowExecution.Status = "Failed";
             await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);
+        }
+        finally
+        {
+            _eventBus.Unsubscribe(workflowExecution.ExecutionId, null);
         }
     }
 }

@@ -9,14 +9,9 @@ using System.Text.Json;
 
 namespace Api.Application.Service;
 
-public class WorkflowExecutionService : IWorkflowExecutionService
+public class WorkflowExecutionService(IWorkflowExecutionRepository workflowExecutionRepository) : IWorkflowExecutionService
 {
-    private readonly IWorkflowExecutionRepository _workflowExecutionRepository;
-
-    public WorkflowExecutionService(IWorkflowExecutionRepository workflowExecutionRepository)
-    {
-        _workflowExecutionRepository = workflowExecutionRepository;
-    }
+    private readonly IWorkflowExecutionRepository _workflowExecutionRepository = workflowExecutionRepository;
 
     public async Task<GetWorkflowExecution?> GetWorkflowExecutionStatusAsync(string executionId)
     {

@@ -16,11 +16,13 @@ import type {
 	AgentChatMessage,
 	AgentOutput,
 	ToolCall,
+	WorkflowEvent,
 	WorkflowExecution,
 	WorkflowPlanResult
 } from '../../models/models'
 import { useAcceptWorkflowExecution } from '../../hooks/useAcceptWorkflowExecution'
 import { enqueueSnackbar } from 'notistack'
+import { useEffect, useState } from 'react'
 
 type ApprovalDialogBoxProps = {
 	approvalDialogOpen: boolean
@@ -33,11 +35,21 @@ const ApprovalDialogBox = ({
 	setApprovalDialogOpen,
 	selectedWorkflow
 }: ApprovalDialogBoxProps) => {
-	const executedPlan = JSON.parse(
-		selectedWorkflow?.agentOutput ?? '{}'
-	) as WorkflowPlanResult
+	// state
+	const [executedPlan, setExecutedPlan] = useState<WorkflowPlanResult>(() => {
+		if (selectedWorkflow?.agentOutput) {
+			try {
+				return JSON.parse(selectedWorkflow.agentOutput) as WorkflowPlanResult
+			} catch (e) {
+				console.error(e)
+			}
+		}
+		return {} as WorkflowPlanResult // default fallback
+	})
+
 	const { mutate: acceptWorkflowExecution } = useAcceptWorkflowExecution()
 
+	// handlers
 	const handleAcceptance = async () => {
 		await handleSubmmit(true, 'Approved by admin')
 	}
@@ -72,6 +84,36 @@ const ApprovalDialogBox = ({
 			})
 		}
 	}
+
+	// effects
+	useEffect(() => {
+		if (!selectedWorkflow?.executionId) {
+			return
+		}
+
+		const eventSource = new EventSource(
+			`/api/workflowExecution/${selectedWorkflow.executionId}/workflowEvents`
+		)
+
+		eventSource.onmessage = (event) => {
+			const data: WorkflowEvent = JSON.parse(event.data)
+
+			if (data.Type === 'FullMessageHistory') {
+				setExecutedPlan((prev) => ({
+					RuntimeEnvironment: prev.RuntimeEnvironment,
+					Steps: [...data.Result]
+				}))
+			}
+		}
+
+		eventSource.onerror = () => {
+			eventSource.close()
+		}
+
+		return () => {
+			eventSource.close()
+		}
+	}, [selectedWorkflow?.executionId])
 
 	return (
 		<Dialog
@@ -122,7 +164,7 @@ const ApprovalDialogBox = ({
 			>
 				{executedPlan && (
 					<Stack spacing={2} sx={{ mt: 2 }}>
-						<Box sx={{ display: 'flex', alignItems: 'center' }}>
+						{executedPlan.RuntimeEnvironment && (<Box sx={{ display: 'flex', alignItems: 'center' }}>
 							<Typography
 								variant='subtitle2'
 								sx={{
@@ -141,7 +183,7 @@ const ApprovalDialogBox = ({
 									fontWeight: 700
 								}}
 							/>
-						</Box>
+						</Box>)}
 
 						<Stack spacing={4}>
 							{executedPlan?.Steps?.map(
@@ -512,35 +554,39 @@ const ApprovalDialogBox = ({
 					Close
 				</Button>
 
-				<Button
-					variant='contained'
-					startIcon={<GavelRoundedIcon />}
-					onClick={handleAcceptance}
-					sx={{
-						borderRadius: 3,
-						textTransform: 'none',
-						px: 3,
-						background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-						boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
-					}}
-				>
-					Approve
-				</Button>
+				{selectedWorkflow?.status == 'ApprovalRequired' && (
+					<>
+						<Button
+							variant='contained'
+							startIcon={<GavelRoundedIcon />}
+							onClick={handleAcceptance}
+							sx={{
+								borderRadius: 3,
+								textTransform: 'none',
+								px: 3,
+								background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+								boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
+							}}
+						>
+							Approve
+						</Button>
 
-				<Button
-					variant='contained'
-					startIcon={<GavelRoundedIcon />}
-					onClick={handleRejection}
-					sx={{
-						borderRadius: 3,
-						textTransform: 'none',
-						px: 3,
-						background: 'linear-gradient(135deg, #eb2525 0%, #d81d1d 100%)',
-						boxShadow: '0 10px 30px rgb(235 37 37 / 35%)'
-					}}
-				>
-					Reject
-				</Button>
+						<Button
+							variant='contained'
+							startIcon={<GavelRoundedIcon />}
+							onClick={handleRejection}
+							sx={{
+								borderRadius: 3,
+								textTransform: 'none',
+								px: 3,
+								background: 'linear-gradient(135deg, #eb2525 0%, #d81d1d 100%)',
+								boxShadow: '0 10px 30px rgb(235 37 37 / 35%)'
+							}}
+						>
+							Reject
+						</Button>
+					</>
+				)}
 			</DialogActions>
 		</Dialog>
 	)

@@ -5,6 +5,7 @@ using Agents.Agents.Infrastructure;
 using Agents.Agents.Orchestrator;
 using Agents.Agents.RootReviewer;
 using Agents.Engine;
+using Agents.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Agents.RegisterServices;
@@ -19,6 +20,7 @@ public static class AgentServiceExtensions
         services.AddScoped<OrchestratorAgent>();
         services.AddScoped<IAgentClientInteractor, AgentClientInteractor>();
         services.AddScoped<IWorkflowEngine, WorkflowEngine>();
+        services.AddSingleton<WorkflowEventBus>();
 
         return services;
     }
