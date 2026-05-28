@@ -164,26 +164,28 @@ const ApprovalDialogBox = ({
 			>
 				{executedPlan && (
 					<Stack spacing={2} sx={{ mt: 2 }}>
-						{executedPlan.RuntimeEnvironment && (<Box sx={{ display: 'flex', alignItems: 'center' }}>
-							<Typography
-								variant='subtitle2'
-								sx={{
-									color: '#94a3b8',
-									mr: 1
-								}}
-							>
-								RUNTIME ENVIRONMENT
-							</Typography>
+						{executedPlan.RuntimeEnvironment && (
+							<Box sx={{ display: 'flex', alignItems: 'center' }}>
+								<Typography
+									variant='subtitle2'
+									sx={{
+										color: '#94a3b8',
+										mr: 1
+									}}
+								>
+									RUNTIME ENVIRONMENT
+								</Typography>
 
-							<Chip
-								label={executedPlan?.RuntimeEnvironment}
-								sx={{
-									bgcolor: 'rgba(37,99,235,0.15)',
-									color: '#60a5fa',
-									fontWeight: 700
-								}}
-							/>
-						</Box>)}
+								<Chip
+									label={executedPlan?.RuntimeEnvironment}
+									sx={{
+										bgcolor: 'rgba(37,99,235,0.15)',
+										color: '#60a5fa',
+										fontWeight: 700
+									}}
+								/>
+							</Box>
+						)}
 
 						<Stack spacing={4}>
 							{executedPlan?.Steps?.map(
@@ -337,31 +339,33 @@ const ApprovalDialogBox = ({
 																						}}
 																					>
 																						<Stack spacing={2}>
-																							<Stack
-																								direction='row'
-																								sx={{
-																									justifyContent:
-																										'space-between',
-																									alignItems: 'center'
-																								}}
-																							>
-																								<Typography
-																									sx={{ fontWeight: 800 }}
-																								>
-																									{tool.ToolName}
-																								</Typography>
-
-																								<Chip
-																									label='Tool'
-																									size='small'
+																							{tool.ToolName && (
+																								<Stack
+																									direction='row'
 																									sx={{
-																										bgcolor:
-																											'rgba(168,85,247,0.15)',
-
-																										color: '#c084fc'
+																										justifyContent:
+																											'space-between',
+																										alignItems: 'center'
 																									}}
-																								/>
-																							</Stack>
+																								>
+																									<Typography
+																										sx={{ fontWeight: 800 }}
+																									>
+																										{tool.ToolName}
+																									</Typography>
+
+																									<Chip
+																										label='Tool'
+																										size='small'
+																										sx={{
+																											bgcolor:
+																												'rgba(168,85,247,0.15)',
+
+																											color: '#c084fc'
+																										}}
+																									/>
+																								</Stack>
+																							)}
 
 																							{tool.Arguments ? (
 																								<Box>

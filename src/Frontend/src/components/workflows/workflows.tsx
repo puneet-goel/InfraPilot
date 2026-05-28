@@ -265,8 +265,9 @@ const Workflow = () => {
 					alignItems: 'center',
 					justifyContent: 'center',
 					mx: 3,
-					py: 6,
-					flexDirection: 'column'
+					flexDirection: 'column',
+				  pb: '0',
+					pt: '2rem'
 				}}
 			>
 				<Stack spacing={2} sx={{ width: '100%', mt: 4, mb: 2 }}>
