@@ -36,7 +36,10 @@ namespace Agents.Utility
             }
 
             // Single tool message
-            messages.Add(new ChatMessage(ChatRole.Tool, toolResults));
+            if (toolResults.Count > 0)
+            {
+                messages.Add(new ChatMessage(ChatRole.Tool, toolResults));
+            }
 
             return null;
         }
