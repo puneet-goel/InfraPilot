@@ -4,11 +4,11 @@ using Microsoft.Extensions.AI;
 
 namespace Agents.Agents.Infrastructure;
 
-public class InfrastructureAgent: IAgent
+public class KubernetesInfrastructureAgent: IAgent
 {
     private readonly IChatClient _chatClient;
 
-    public InfrastructureAgent(IChatClient chatClient)
+    public KubernetesInfrastructureAgent(IChatClient chatClient)
     {
         _chatClient = chatClient
             .AsBuilder()
@@ -16,10 +16,11 @@ public class InfrastructureAgent: IAgent
             .Build(); ;
     }
 
-    public string Name => "InfrastructureAgent";
+    public string Name => "KubernetesInfrastructureAgent";
 
     public string Description =>
     """
+    Its only for kubernetes read access queries.
     Handles:
     - Kubernetes infrastructure diagnostics
     - cluster resource inspection

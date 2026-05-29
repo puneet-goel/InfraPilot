@@ -4,19 +4,20 @@ using Microsoft.Extensions.AI;
 
 namespace Agents.Agents.Deployment;
 
-public class DeploymentAgent: IAgent
+public class KubernetesDeploymentAgent: IAgent
 {
     private readonly IChatClient _chatClient;
 
-    public DeploymentAgent(IChatClient chatClient)
+    public KubernetesDeploymentAgent(IChatClient chatClient)
     {
         _chatClient = chatClient;
     }
 
-    public string Name => "DeploymentAgent";
+    public string Name => "KubernetesDeploymentAgent";
 
     public string Description =>
     """
+    Its only for kubernetes write access queries.
     Handles:
     - Kubernetes infrastructure provisioning
     - deployment creation and updates

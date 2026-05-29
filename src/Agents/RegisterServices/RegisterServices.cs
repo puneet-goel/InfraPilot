@@ -16,9 +16,9 @@ public static class AgentServiceExtensions
 {
     public static IServiceCollection AddAgents(this IServiceCollection services)
     {
-        services.AddScoped<IAgent, DeploymentAgent>();
+        services.AddScoped<IAgent, KubernetesDeploymentAgent>();
         services.AddScoped<IAgent, RootReviewerAgent>();
-        services.AddScoped<IAgent, InfrastructureAgent>();
+        services.AddScoped<IAgent, KubernetesInfrastructureAgent>();
         services.AddScoped<IAgent, DockerReadAgent>();
         services.AddScoped<IAgent, DockerWriteAgent>();
         services.AddScoped<OrchestratorAgent>();

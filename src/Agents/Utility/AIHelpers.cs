@@ -183,7 +183,7 @@ namespace Agents.Utility
                 }
             }
 
-            return string.Join(" ", result);
+            return string.Join(", ", result);
         }
     }
 }
