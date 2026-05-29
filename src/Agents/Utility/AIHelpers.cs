@@ -1,6 +1,7 @@
 ﻿using Agents.Agents;
 using Agents.Workflow;
 using Microsoft.Extensions.AI;
+using System.Text.RegularExpressions;
 
 namespace Agents.Utility
 {
@@ -12,21 +13,13 @@ namespace Agents.Utility
             List<FunctionCallContent> toolCalls =
                 [.. assistantMessage.Contents.OfType<FunctionCallContent>()];
 
-            // No tools? Final answer
-            if (toolCalls.Count == 0)
+            // check if question
+            Match match = Regex.Match(assistantMessage.Text, "<Question>(.*?)</Question>", RegexOptions.Singleline);
+            if (approvalToCallTool || match.Success)
             {
                 return new AgentResult()
                 {
-                    ApprovalRequired = false,
-                    Messages = [.. messages]
-                };
-            }
-
-            if (approvalToCallTool)
-            {
-                return new AgentResult()
-                {
-                    ApprovalRequired = true,
+                    ApprovalRequired = match.Success | toolCalls.Count > 0,
                     Messages = [.. messages]
                 };
             }
@@ -138,6 +131,56 @@ namespace Agents.Utility
             }
 
             return chats;
+        }
+
+        public static List<string> FindAgentsToExclude()
+        {
+            string? socket = Environment.GetEnvironmentVariable("CONTAINER_SOCKET");
+            string? host = Environment.GetEnvironmentVariable("KUBE_HOST");
+            string? token = Environment.GetEnvironmentVariable("KUBE_TOKEN");
+
+            List<string> excludeAgents = [];
+            if (host == null || token == null)
+            {
+                excludeAgents.Add("InfrastructureAgent");
+                excludeAgents.Add("DeploymentAgent");
+            }
+
+            if (socket == null)
+            {
+                excludeAgents.Add("DockerWriteAgent");
+                excludeAgents.Add("DockerReadAgent");
+            }
+
+            return excludeAgents;
+        }
+
+        public static string FindRunTimeEnvironment()
+        {
+            string? runtime = Environment.GetEnvironmentVariable("CONTAINER_RUNTIME");
+            string? socket = Environment.GetEnvironmentVariable("CONTAINER_SOCKET");
+            string? host = Environment.GetEnvironmentVariable("KUBE_HOST");
+            string? token = Environment.GetEnvironmentVariable("KUBE_TOKEN");
+
+            List<string> result = [];
+            if (host != null && token != null)
+            {
+                result.Add("Kubernetes");
+            }
+
+            if (socket != null)
+            {
+                if(runtime?.ToLower() == "podman")
+                {
+                    result.Add("Podman");
+                }
+                else
+                {
+                    result.Add("Docker");
+                }
+            }
+
+            return string.Join(" ", result);
         }
     }
 }

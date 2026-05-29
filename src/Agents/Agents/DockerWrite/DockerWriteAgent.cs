@@ -15,8 +15,6 @@ public class DockerWriteAgent: IAgent
 
     public string Name => "DockerWriteAgent";
 
-    public bool IsWriteAgent => true;
-
     public string Description =>
     """
     Handles:
@@ -36,7 +34,7 @@ public class DockerWriteAgent: IAgent
 
     public async Task<AgentResult> AnalyzeAsync(string query, List<ChatMessage> prevMessages)
     {
-        IList<AITool> tools = await DeployMcpHostService.GetToolsAsync();
+        IList<AITool> tools = await DockerWriteMcpHostService.GetToolsAsync();
 
         ChatOptions options = new()
         {

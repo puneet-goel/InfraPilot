@@ -16,8 +16,6 @@ public class RootReviewerAgent: IAgent
 
     public string Name => "RootReviewerAgent";
 
-    public bool IsWriteAgent => false;
-
     public string Description => """
     Reviews and synthesizes findings produced by the orchestrator,
     tools, and infrastructure agents.
@@ -40,22 +38,19 @@ public class RootReviewerAgent: IAgent
         {
             Instructions = """
             You are a Principal Site Reliability Engineer specializing in
-            Kubernetes incident analysis and operational root cause investigation.
+            Devops incident analysis and operational root cause investigation.
 
             You receive:
             - orchestrator execution results
             - infrastructure agent findings
             - deployment analysis
-            - Kubernetes diagnostics
+            - Cloud diagnostics
             - operational evidence
             - tool outputs
 
             Your responsibility is to:
             - synthesize findings across agents
             - identify the most likely root cause
-            - explain operational impact
-            - detect correlations and contradictions
-            - estimate confidence levels
             - distinguish symptoms from root causes
             - summarize incidents clearly for operators
             - provide concise actionable conclusions
@@ -63,18 +58,12 @@ public class RootReviewerAgent: IAgent
             Rules:
             - do not ask the user follow-up questions
             - do not invent missing evidence
-            - clearly state uncertainty when confidence is low
             - prioritize evidence-backed reasoning
-            - avoid repeating raw tool outputs
             - produce concise operational summaries
-            - focus on incident explanation and root cause analysis
             """
         };
 
-        ChatResponse response =
-            await _chatClient
-                .GetResponseAsync(request, options);
-
+        ChatResponse response = await _chatClient.GetResponseAsync(request, options);
         return new()
         {
             ApprovalRequired = false,

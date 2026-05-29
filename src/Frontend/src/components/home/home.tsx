@@ -15,11 +15,11 @@ import { enqueueSnackbar } from 'notistack'
 
 const Home = () => {
 	const [prompt, setPrompt] = useState('')
-	const createWorkflow = useCreateWorkflow()
+	const { mutateAsync: createWorkflow, isPending } = useCreateWorkflow()
 
 	const handleOnSubmit = async () => {
 		try {
-			await createWorkflow.mutateAsync(prompt)
+			await createWorkflow(prompt)
 			setPrompt('')
 			enqueueSnackbar('Workflow created successfully!', {
 				variant: 'success',
@@ -28,7 +28,7 @@ const Home = () => {
 					horizontal: 'right'
 				}
 			})
-		} catch (err){
+		} catch (err) {
 			console.error('Error while submitting workflow:', err)
 			enqueueSnackbar('Error while submitting workflow', {
 				variant: 'error',
@@ -142,6 +142,7 @@ const Home = () => {
 									variant='contained'
 									size='large'
 									endIcon={<SendRoundedIcon />}
+									disabled={!prompt.trim() || isPending}
 									sx={{
 										height: 56,
 										px: 4,

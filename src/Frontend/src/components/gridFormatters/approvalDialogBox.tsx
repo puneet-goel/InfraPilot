@@ -10,7 +10,8 @@ import {
 	Box,
 	Chip,
 	Paper,
-	Divider
+	Divider,
+	TextField
 } from '@mui/material'
 import type {
 	AgentChatMessage,
@@ -46,8 +47,13 @@ const ApprovalDialogBox = ({
 		}
 		return {} as WorkflowPlanResult // default fallback
 	})
+	const [questionResponse, setQuestionResponse] = useState('')
 
-	const { mutate: acceptWorkflowExecution } = useAcceptWorkflowExecution()
+	const { mutateAsync: acceptWorkflowExecution, isPending } = useAcceptWorkflowExecution()
+
+	const lastMessage = executedPlan?.Steps?.at(-1)?.Chat?.at(-1)?.Text ?? ''
+	const isQuestion =
+		/<Question>/i.test(lastMessage) && /<\/Question>/i.test(lastMessage)
 
 	// handlers
 	const handleAcceptance = async () => {
@@ -58,12 +64,22 @@ const ApprovalDialogBox = ({
 		await handleSubmmit(false, 'Rejected by admin')
 	}
 
-	const handleSubmmit = async (accept: boolean, reason: string) => {
+	const handleChatResponse = async () => {
+		await handleSubmmit(false, '', lastMessage)
+		setQuestionResponse('')
+	}
+
+	const handleSubmmit = async (
+		accept: boolean,
+		reason: string,
+		message?: string
+	) => {
 		try {
 			await acceptWorkflowExecution({
 				executionId: selectedWorkflow.executionId,
 				accept,
-				reason
+				reason,
+				message
 			})
 			enqueueSnackbar('Workflow approved successfully!', {
 				variant: 'success',
@@ -316,12 +332,14 @@ const ApprovalDialogBox = ({
 																				color: 'rgba(255,255,255,0.82)'
 																			}}
 																		>
-																			{message.Text}
+																			{message.Text?.replace(
+																				/<\/?Question>/gi,
+																				''
+																			)?.trim()}
 																		</Typography>
 																	)}
 
 																	{/* TOOL CALLS */}
-
 																	{message.ToolCalls?.length > 0 && (
 																		<Stack spacing={2}>
 																			{message.ToolCalls.map(
@@ -500,7 +518,6 @@ const ApprovalDialogBox = ({
 																	)}
 
 																	{/* APPROVAL REASON */}
-
 																	{message.ApprovalReason && (
 																		<Paper
 																			elevation={0}
@@ -541,29 +558,97 @@ const ApprovalDialogBox = ({
 				sx={{
 					borderTop: '1px solid rgba(255,255,255,0.08)',
 					p: 2.5,
-					gap: 1
+					gap: 1,
+					flexDirection: 'column',
+					alignItems: 'stretch'
 				}}
 			>
-				<Button
-					onClick={() => setApprovalDialogOpen(false)}
-					variant='outlined'
-					sx={{
-						borderRadius: 3,
-						textTransform: 'none',
-						borderColor: 'rgba(255,255,255,0.12)',
-						color: 'rgba(255,255,255,0.8)',
-						px: 3
-					}}
-				>
-					Close
-				</Button>
+				{selectedWorkflow?.status === 'ApprovalRequired' && isQuestion && (
+					<TextField
+						fullWidth
+						placeholder='Type your response...'
+						value={questionResponse}
+						onChange={(e) => setQuestionResponse(e.target.value)}
+						multiline
+						minRows={3}
+						sx={{
+							mb: 2,
+							'& .MuiOutlinedInput-root': {
+								color: 'white',
+								background: 'rgba(255,255,255,0.03)',
+								'& fieldset': {
+									borderColor: 'rgba(255,255,255,0.12)'
+								},
+								'&:hover fieldset': {
+									borderColor: 'rgba(255,255,255,0.2)'
+								},
+								'&.Mui-focused fieldset': {
+									borderColor: '#60a5fa'
+								}
+							}
+						}}
+					/>
+				)}
 
-				{selectedWorkflow?.status == 'ApprovalRequired' && (
-					<>
+				<Stack direction='row' spacing={1} sx={{ width: '100%' }}>
+					<Button
+						onClick={() => setApprovalDialogOpen(false)}
+						variant='outlined'
+						sx={{
+							borderRadius: 3,
+							textTransform: 'none',
+							borderColor: 'rgba(255,255,255,0.12)',
+							color: 'rgba(255,255,255,0.8)',
+							px: 3
+						}}
+					>
+						Close
+					</Button>
+
+					{selectedWorkflow?.status == 'ApprovalRequired' && !isQuestion && (
+						<>
+							<Button
+								variant='contained'
+								startIcon={<GavelRoundedIcon />}
+								onClick={handleAcceptance}
+								disabled={isPending}
+								sx={{
+									borderRadius: 3,
+									textTransform: 'none',
+									px: 3,
+									background:
+										'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+									boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
+								}}
+							>
+								Approve
+							</Button>
+
+							<Button
+								variant='contained'
+								startIcon={<GavelRoundedIcon />}
+								onClick={handleRejection}
+								disabled={isPending}
+								sx={{
+									borderRadius: 3,
+									textTransform: 'none',
+									px: 3,
+									background:
+										'linear-gradient(135deg, #eb2525 0%, #d81d1d 100%)',
+									boxShadow: '0 10px 30px rgb(235 37 37 / 35%)'
+								}}
+							>
+								Reject
+							</Button>
+						</>
+					)}
+
+					{selectedWorkflow?.status == 'ApprovalRequired' && isQuestion && (
 						<Button
 							variant='contained'
 							startIcon={<GavelRoundedIcon />}
-							onClick={handleAcceptance}
+							onClick={handleChatResponse}
+							disabled={!questionResponse.trim()}
 							sx={{
 								borderRadius: 3,
 								textTransform: 'none',
@@ -572,25 +657,10 @@ const ApprovalDialogBox = ({
 								boxShadow: '0 10px 30px rgba(37,99,235,0.35)'
 							}}
 						>
-							Approve
+							Send
 						</Button>
-
-						<Button
-							variant='contained'
-							startIcon={<GavelRoundedIcon />}
-							onClick={handleRejection}
-							sx={{
-								borderRadius: 3,
-								textTransform: 'none',
-								px: 3,
-								background: 'linear-gradient(135deg, #eb2525 0%, #d81d1d 100%)',
-								boxShadow: '0 10px 30px rgb(235 37 37 / 35%)'
-							}}
-						>
-							Reject
-						</Button>
-					</>
-				)}
+					)}
+				</Stack>
 			</DialogActions>
 		</Dialog>
 	)

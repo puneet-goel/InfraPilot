@@ -34,6 +34,16 @@ public class WorkflowExecutionService(IWorkflowExecutionRepository workflowExecu
         WorkflowPlanResult? lastOutputSaved = JsonSerializer.Deserialize<WorkflowPlanResult>(workflowExecution.AgentOutput);
 
         AgentOutput lastAgentOutput = lastOutputSaved.Steps.Last();
+        if (req.Message != null)
+        {
+            lastAgentOutput.Chat.Add(new()
+            {
+                Role = "user",
+                Text = req.Message,
+                IsApprovalRequired = false
+            });
+        }
+
         AgentChatMessage lastAgentChatMessage = lastAgentOutput.Chat.Last();
 
         lastAgentChatMessage.ApprovalStatus = req.Accept ? "Approved" : "Rejected";

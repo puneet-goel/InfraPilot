@@ -7,6 +7,8 @@ export type WorkflowExecution = {
 	agentOutput: string
 	currentAgent: string
 	reason: string
+	createdAt: string
+	updatedAt: string
 }
 
 export type WorkflowPlan = {
@@ -50,6 +52,7 @@ export type AcceptWorkflowexecutionRequest = {
 	executionId: string
 	accept: boolean
 	reason: string
+	message?: string
 }
 
 export type ReRunWorkflowRequest = {

@@ -8,8 +8,6 @@ public interface IAgent
     
     string Description { get; }
 
-    bool IsWriteAgent { get; }
-
     Task<AgentResult> AnalyzeAsync(string task, List<ChatMessage> messages);
 }
 

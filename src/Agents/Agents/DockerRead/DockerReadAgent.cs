@@ -18,8 +18,6 @@ public class DockerReadAgent: IAgent
 
     public string Name => "DockerReadAgent";
 
-    public bool IsWriteAgent => false;
-
     public string Description =>
      """
     Handles:
@@ -39,7 +37,7 @@ public class DockerReadAgent: IAgent
 
     public async Task<AgentResult> AnalyzeAsync(string query, List<ChatMessage> prevMessages)
     {
-        IList<AITool> tools = await InfraMcpHostService.GetToolsAsync();
+        IList<AITool> tools = await DockerReadMcpHostService.GetToolsAsync();
 
         ChatOptions options = new()
         {

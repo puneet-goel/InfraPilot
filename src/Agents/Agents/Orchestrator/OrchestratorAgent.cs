@@ -1,4 +1,5 @@
-﻿using Agents.Workflow;
+﻿using Agents.Utility;
+using Agents.Workflow;
 using Microsoft.Extensions.AI;
 using System.Text.Json;
 
@@ -21,11 +22,11 @@ public class OrchestratorAgent
 
     public async Task<WorkflowPlan> CreatePlanAsync(string userRequest)
     {
+        List<string> excludeAgents = AIHelpers.FindAgentsToExclude();
+
         string agentDescriptions = string.Join("\n\n", 
             _agents
-            .Where(agent =>
-                agent.Name !=
-                "RootReviewerAgent")
+            .Where(agent => !excludeAgents.Contains(agent.Name))
             .Select(agent => $$"""
             Agent: {{agent.Name}}
             Responsibilities: {{agent.Description}} 
@@ -87,6 +88,7 @@ public class OrchestratorAgent
                     PropertyNameCaseInsensitive = true
                 })!;
 
+        plan.RuntimeEnvironment = AIHelpers.FindRunTimeEnvironment();
         return plan ?? new WorkflowPlan();
     }
 }

@@ -15,8 +15,6 @@ public class DeploymentAgent: IAgent
 
     public string Name => "DeploymentAgent";
 
-    public bool IsWriteAgent => true;
-
     public string Description =>
     """
     Handles:

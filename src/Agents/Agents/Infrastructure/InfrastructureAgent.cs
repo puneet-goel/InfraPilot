@@ -18,8 +18,6 @@ public class InfrastructureAgent: IAgent
 
     public string Name => "InfrastructureAgent";
 
-    public bool IsWriteAgent => false;
-
     public string Description =>
     """
     Handles:

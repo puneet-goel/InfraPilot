@@ -83,19 +83,6 @@ public class WorkflowEngine(
                     AgentName = "OrchestratorAgent"
                 });
 
-                bool isWriteAgent = workflowPlan.Steps.Any(step =>
-                    _agents.Any(agent =>
-                    agent.Name == step.AgentName && agent.IsWriteAgent));
-
-                if (!isWriteAgent)
-                {
-                    workflowPlan.Steps.Add(new WorkflowStep()
-                    {
-                        Task = "Analyse the final findings.",
-                        AgentName = "RootReviewerAgent"
-                    });
-                }
-
                 // update plan in db
                 workflowExecution.WorkflowPlan = JsonSerializer.Serialize(workflowPlan);
                 await _workflowExecutionRepository.UpdateWorkflowExecution(workflowExecution);

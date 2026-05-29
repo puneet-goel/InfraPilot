@@ -2,7 +2,7 @@ import { Box, Chip, IconButton, Paper, Stack, Typography } from '@mui/material'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import { useGetWorkflowExecutions } from '../../hooks/useGetWorkflowExecution'
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { WorkflowExecution } from '../../models/models'
 import PlanDialogBox from '../gridFormatters/planDialogBox'
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded'
@@ -249,6 +249,13 @@ const Workflow = () => {
 		}
 	]
 
+	const sortedWorkflows = useMemo(() => {
+		return [...workflowExecutions].sort(
+			(a, b) =>
+				new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+		)
+	}, [workflowExecutions])
+
 	return (
 		<Box
 			sx={{
@@ -266,7 +273,7 @@ const Workflow = () => {
 					justifyContent: 'center',
 					mx: 3,
 					flexDirection: 'column',
-				  pb: '0',
+					pb: '0',
 					pt: '2rem'
 				}}
 			>
@@ -347,7 +354,7 @@ const Workflow = () => {
 					}}
 				>
 					<DataGrid
-						rows={workflowExecutions}
+						rows={sortedWorkflows}
 						columns={columns}
 						loading={isLoading}
 						disableRowSelectionOnClick
@@ -362,9 +369,6 @@ const Workflow = () => {
 								paginationModel: {
 									pageSize: 10
 								}
-							},
-							sorting: {
-								sortModel: [{ field: 'updatedAt', sort: 'desc' }]
 							}
 						}}
 						sx={{
