@@ -65,7 +65,7 @@ const ApprovalDialogBox = ({
 	}
 
 	const handleChatResponse = async () => {
-		await handleSubmmit(false, '', lastMessage)
+		await handleSubmmit(true, '', questionResponse)
 		setQuestionResponse('')
 	}
 
@@ -590,7 +590,7 @@ const ApprovalDialogBox = ({
 					/>
 				)}
 
-				<Stack direction='row' spacing={1} sx={{ width: '100%' }}>
+				<Stack direction='row' spacing={1} sx={{ width: '100%', justifyContent: 'flex-end' }}>
 					<Button
 						onClick={() => setApprovalDialogOpen(false)}
 						variant='outlined'
