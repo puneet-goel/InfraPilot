@@ -55,7 +55,6 @@ You can check all the exposed tools from here: https://github.com/puneet-goel/In
 
 InfraPilot is designed to act as an AI-powered infrastructure copilot while maintaining visibility, auditability, and human control over sensitive operations.
 
-
 ## Running InfraPilot with Docker
 
 ### Environment Variables
@@ -74,6 +73,12 @@ InfraPilot is configured entirely through environment variables.
 | `KUBE_TOKEN`             | Service Account bearer token used by InfraPilot to authenticate against the Kubernetes API.                                                        |
 | `CONTAINER_RUNTIME`      | Container runtime used by infrastructure agents. Supported values: `docker`, `podman`.                                                             |
 | `CONTAINER_SOCKET`       | Unix socket used to communicate with the container runtime.                                                                                        |
+
+InfraPilot does not require both Kubernetes and Container Runtime integrations to be configured.
+
+The runtime environment is determined dynamically during workflow execution based on the task being performed.
+
+You may configue Kubernetes only or Container Runtime only or Both.
 
 ---
 
